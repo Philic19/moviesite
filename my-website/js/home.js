@@ -126,9 +126,11 @@ async function searchTMDB() {
 }
 
 async function init() {
+  toggleLoader(true);
   const movies = await fetchTrending('movie');
   const tvShows = await fetchTrending('tv');
   const anime = await fetchTrendingAnime();
+  toggleLoader(false);
 
   displayBanner(movies[Math.floor(Math.random() * movies.length)]);
   displayList(movies, 'movies-list');
