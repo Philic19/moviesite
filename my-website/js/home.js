@@ -1,7 +1,12 @@
 const API_KEY = '277256e815b05aae4f56dd5dd45eaa97';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/original';
-let currentItem;
+let currentItems = {
+  movies: [],
+  tvShows: [],
+  anime: []
+};
+
 
 async function fetchTrending(type) {
   try {
