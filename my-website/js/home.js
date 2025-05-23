@@ -4,9 +4,14 @@ const API_KEY = '277256e815b05aae4f56dd5dd45eaa97';
     let currentItem;
 
     async function fetchTrending(type) {
+     try {
       const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}`);
       const data = await res.json();
       return data.results;
+        } catch (error) {
+         console.error("Error Fetching Trending:", error);
+         return[];
+                        }
     }
 
     async function fetchTrendingAnime() {
