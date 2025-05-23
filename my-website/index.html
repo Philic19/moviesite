@@ -37,7 +37,12 @@
 
   <div class="row">
     <h2>Trending Movies</h2>
-    <div class="list" id="movies-list"></div>
+    <div class="pagination" style="text-align:center; margin: 20px;">
+    <button id="prev-btn" onclick="changePage(-1)">⬅ Prev</button>
+    <span id="page-indicator">Page 1</span>
+    <button onclick="changePage(1)">Next ➡</button>
+</div>
+
   </div>
 
   <div class="row">
