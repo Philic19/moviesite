@@ -4,6 +4,7 @@
     .navbar {
       display: flex; justify-content: space-between; align-items: center;
       padding: 10px; background: #222;
+      position: relative; /* Ensure positioning context */
     }
 
     .navbar img { height: 40px; /* Adjust the height as needed */
@@ -17,6 +18,7 @@
 
     .search-bar {
       padding: 5px; border-radius: 5px; border: none;
+      margin-left: auto; /* Pushes the search bar to the right */
     }
 
     .banner {
