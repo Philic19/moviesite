@@ -4,9 +4,17 @@
                       background: #f9f9f9;
                       color: #111;
                     }
-    body.light-mode .navbar {
-                                  background: #ddd;
-                            }
+body.light-mode .navbar,
+body.light-mode .footer {
+                          background: #ddd;
+                          color: #111;
+                     }
+body.light-mode .nav-links a {  color: #111; }
+body.light-mode .footer-links a { color: blue; }
+body.light-mode .modal-content {
+                                background: #fff;
+                                color: #000;
+                                }
 
 
     .navbar {
