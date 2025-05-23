@@ -137,9 +137,6 @@ async function init() {
   displayList(tvShows, 'tvshows-list');
   displayList(anime, 'anime-list');
 
-  // Restore last watched item
-  const last = localStorage.getItem('lastItem');
-  if (last) showDetails(JSON.parse(last));
 }
 
 window.addEventListener('keydown', e => {
