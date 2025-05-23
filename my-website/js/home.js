@@ -36,6 +36,17 @@ async function fetchTrendingAnime() {
   return allResults;
 }
 
+async function fetchGenres(type = 'movie') {
+  try {
+    const res = await fetch(`${BASE_URL}/genre/${type}/list?api_key=${API_KEY}`);
+    const data = await res.json();
+    return data.genres;
+  } catch (error) {
+    console.error("Error fetching genres:", error);
+    return [];
+  }
+}
+
 function displayBanner(item) {
   document.getElementById('banner').style.backgroundImage = `url(${IMG_URL}${item.backdrop_path})`;
   document.getElementById('banner-title').textContent = item.title || item.name;
@@ -131,18 +142,43 @@ async function searchTMDB() {
 }
 
 async function init() {
-  
   const movies = await fetchTrending('movie');
   const tvShows = await fetchTrending('tv');
   const anime = await fetchTrendingAnime();
-  
+
+  currentItems.movies = movies;
+  currentItems.tvShows = tvShows;
+  currentItems.anime = anime;
 
   displayBanner(movies[Math.floor(Math.random() * movies.length)]);
   displayList(movies, 'movies-list');
   displayList(tvShows, 'tvshows-list');
   displayList(anime, 'anime-list');
 
+  const genres = await fetchGenres('movie');
+  const genreSelect = document.getElementById('genre-filter');
+  if (genreSelect) {
+    genres.forEach(genre => {
+      const option = document.createElement('option');
+      option.value = genre.id;
+      option.textContent = genre.name;
+      genreSelect.appendChild(option);
+    });
+
+    genreSelect.addEventListener('change', function () {
+      const selectedGenre = this.value;
+      if (selectedGenre === 'all') {
+        displayList(currentItems.movies, 'movies-list');
+      } else {
+        const filtered = currentItems.movies.filter(movie =>
+          movie.genre_ids.includes(parseInt(selectedGenre))
+        );
+        displayList(filtered, 'movies-list');
+      }
+    });
+  }
 }
+
 
 window.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
