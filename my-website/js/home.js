@@ -8,9 +8,9 @@ let currentItems = {
 };
 
 
-async function fetchTrending(type) {
+async function fetchTrending(type, page = 1) {
   try {
-    const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}`);
+ const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}&page=${page}`);
     const data = await res.json();
     return data.results;
   } catch (error) {
