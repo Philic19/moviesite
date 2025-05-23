@@ -2,9 +2,10 @@
     body { font-family: Arial, sans-serif; background: #111; color: #fff; }
 
     .navbar {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 10px; background: #222;
-      position: relative; /* Ensure positioning context */
+        display: flex; 
+        justify-content: space-between; align-items: center;
+        padding: 10px; background: #222;
+        position: relative; /* Ensure positioning context */
     }
 
     .navbar img { height: 40px; /* Adjust the height as needed */
@@ -13,8 +14,15 @@
                   object-fit: cover; /* Ensures the image covers the entire area without distortion */
                   margin-right: 10px; /* Space between the logo and the nav links */ 
                 }
-    .nav-links { display: flex; align-items: center; gap: 10px;  margin-left: auto; }
-    .nav-links a { color: white; text-decoration: none; margin: 0 5px; }
+    .nav-links { display: flex; 
+                align-items: center; 
+                gap: 10px;  
+                margin-left: auto; 
+               }
+    .nav-links a { color: white; 
+                  text-decoration: none; 
+                  margin: 0 5px;
+                 }
 
     .search-bar {
       padding: 5px; border-radius: 5px; border: none;
