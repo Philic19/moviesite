@@ -6,7 +6,12 @@
       padding: 10px; background: #222;
     }
 
-    .navbar img { height: 40px; }
+    .navbar img { height: 40px; /* Adjust the height as needed */
+                  width: 40px; /* Set the width to the same value as height for a perfect circle */
+                  border-radius: 50%; /* This makes the image circular */
+                  object-fit: cover; /* Ensures the image covers the entire area without distortion */
+                  margin-right: 10px; /* Space between the logo and the nav links */ 
+                }
     .nav-links { display: flex; align-items: center; gap: 10px;  margin-left: 10px; }
     .nav-links a { color: white; text-decoration: none; margin: 0 5px; }
 
