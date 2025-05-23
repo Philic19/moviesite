@@ -154,4 +154,9 @@ document.getElementById('search-input').addEventListener('input', () => {
   debounceTimeout = setTimeout(searchTMDB, 400);
 });
 
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  document.body.classList.toggle('light-mode');
+});
+
+
 init();
