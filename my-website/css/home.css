@@ -21,7 +21,9 @@ body.light-mode .modal-content {
         display: flex; 
         justify-content: space-between; align-items: center;
         padding: 10px; background: #222;
-        position: relative; /* Ensure positioning context */
+        position: sticky; /* change to relative to Ensure positioning context */
+        top: 0;
+        z-index: 1000;
     }
 
     .navbar img { height: 40px; /* Adjust the height as needed */
@@ -35,10 +37,20 @@ body.light-mode .modal-content {
                 gap: 10px;  
                 margin-left: auto; 
                }
-    .nav-links a { color: white; 
-                  text-decoration: none; 
+   .nav-links a {
+                  color: white;
+                  text-decoration: none;
                   margin: 0 5px;
-                 }
+                  transition: all 0.2s ease-in-out;
+                }
+
+.nav-links a:hover {
+                  color: #f39c12;
+                  text-decoration: underline;
+                  transform: scale(1.05);
+                    }
+
+    
 
     .search-bar {
       padding: 5px; border-radius: 5px; border: none;
