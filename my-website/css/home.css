@@ -136,7 +136,7 @@ body.light-mode .modal-content {
 
 .list {
   display: flex;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
 .list img {
