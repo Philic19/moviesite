@@ -1,115 +1,63 @@
-<script>
-const API_KEY = '277256e815b05aae4f56dd5dd45eaa97';
-const BASE_URL = 'https://api.themoviedb.org/3';
-const IMG_URL = 'https://image.tmdb.org/t/p/original';
-const mediaType = 'tv';
-const ANIME_KEYWORD = 210024;
+const genre = genreSelect.value;
+const year = yearSelect.value;
+const cacheKey = `${genre}-${year}-${currentPage}`;
 
-let currentItem = null;
-let currentPage = 1;
-let totalPages = Infinity;
-let isLoading = false;
-
-const latestMoviesList = document.getElementById('latest-movies-list');
-const pageIndicator = document.getElementById('latest-page-indicator');
-const genreSelect = document.getElementById('genre-select');
-const yearSelect = document.getElementById('year-select');
-const movieCache = new Map();
-
-async function fetchGenres() {
-  try {
-    const res = await fetch(`${BASE_URL}/genre/tv/list?api_key=${API_KEY}`);
-    const data = await res.json();
-    data.genres.forEach(genre => {
-      const option = document.createElement('option');
-      option.value = genre.id;
-      option.textContent = genre.name;
-      genreSelect.appendChild(option);
-    });
-  } catch (err) {
-    console.error('Error loading genres:', err);
-  }
+if (movieCache.has(cacheKey)) {
+  const cached = movieCache.get(cacheKey);
+  appendAnime(cached.results);
+  totalPages = cached.totalPages;
+  currentPage++;
+  isLoading = false;
+  pageIndicator.textContent = `Page ${currentPage - 1}`;
+  return;
 }
 
-function populateYearDropdown() {
-  const currentYear = new Date().getFullYear();
-  for (let year = currentYear; year >= currentYear - 30; year--) {
-    const option = document.createElement('option');
-    option.value = year;
-    option.textContent = year;
-    yearSelect.appendChild(option);
-  }
+let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_keywords=${ANIME_KEYWORD}`;
+if (genre) url += `&with_genres=${genre}`;
+if (year) url += `&first_air_date_year=${year}`;
+
+try {
+  const res = await fetch(url);
+  const data = await res.json();
+
+  movieCache.set(cacheKey, {
+    results: data.results || [],
+    totalPages: data.total_pages
+  });
+
+  totalPages = data.total_pages;
+  appendAnime(data.results || []);
+  currentPage++;
+  pageIndicator.textContent = `Page ${currentPage - 1}`;
+} catch (err) {
+  console.error('Error fetching anime:', err);
+} finally {
+  isLoading = false;
+}
 }
 
-async function fetchNextPage() {
-  if (isLoading || currentPage > totalPages || currentPage > 100) return;
-
-  isLoading = true;
-  pageIndicator.textContent = `Loading page ${currentPage}...`;
-
-  const genre = genreSelect.value;
-  const year = yearSelect.value;
-  const cacheKey = `${genre}-${year}-${currentPage}`;
-
-  if (movieCache.has(cacheKey)) {
-    const cached = movieCache.get(cacheKey);
-    appendMovies(cached.results);
-    totalPages = cached.totalPages;
-    currentPage++;
-    isLoading = false;
-    pageIndicator.textContent = `Page ${currentPage - 1}`;
+function appendAnime(shows) {
+  if (!shows.length) {
+    const msg = document.createElement('p');
+    msg.textContent = 'No anime found.';
+    animeList.appendChild(msg);
     return;
   }
 
-  let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_keywords=${ANIME_KEYWORD}`;
-  if (genre) url += `&with_genres=${genre}`;
-  if (year) url += `&first_air_date_year=${year}`;
-
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    console.log("Fetched Anime:", data.results);
-
-    totalPages = data.total_pages;
-    movieCache.set(cacheKey, { results: data.results || [], page: currentPage, totalPages });
-    appendMovies(data.results || []);
-    currentPage++;
-    pageIndicator.textContent = `Page ${currentPage - 1}`;
-  } catch (error) {
-    console.error("Error fetching anime:", error);
-  } finally {
-    isLoading = false;
-  }
-}
-
-function appendMovies(movies) {
-  if (!movies.length) {
-    const endMsg = document.createElement('p');
-    endMsg.textContent = 'No more anime found.';
-    latestMoviesList.appendChild(endMsg);
-    return;
-  }
-
-  movies.forEach(movie => {
+  shows.forEach(show => {
     const img = document.createElement('img');
-    img.src = movie.poster_path ? `https://image.tmdb.org/t/p/w342${movie.poster_path}` : '';
-    img.alt = movie.name || 'No title';
-    img.title = movie.name || '';
+    img.src = show.poster_path ? `${IMG_URL}${show.poster_path}` : '';
+    img.alt = show.name || 'No title';
+    img.title = show.name || '';
     img.loading = 'lazy';
     img.style.cursor = 'pointer';
-    img.style.minHeight = '250px';
-
-    img.onclick = () => showDetails({
-      ...movie,
-      media_type: mediaType
-    });
-
-    latestMoviesList.appendChild(img);
+    img.onclick = () => showDetails({ ...show, media_type: 'tv' });
+    animeList.appendChild(img);
   });
 }
 
-function resetMovies() {
-  latestMoviesList.innerHTML = '';
+function resetAnime() {
+  animeList.innerHTML = '';
   currentPage = 1;
   totalPages = Infinity;
   movieCache.clear();
@@ -118,7 +66,6 @@ function resetMovies() {
 
 function showDetails(item) {
   currentItem = item;
-
   document.getElementById('modal-title').textContent = item.name || item.title || 'No title';
   document.getElementById('modal-description').textContent = item.overview || 'No description.';
   document.getElementById('modal-image').src = item.poster_path ? `${IMG_URL}${item.poster_path}` : '';
@@ -137,11 +84,12 @@ function showDetails(item) {
 function changeServer() {
   if (!currentItem) return;
   const server = document.getElementById('server').value;
-  const embedURL = server === "vidsrc.cc"
-    ? `https://vidsrc.cc/v2/embed/tv/${currentItem.id}`
-    : server === "vidsrc.me"
-    ? `https://vidsrc.net/embed/tv/?tmdb=${currentItem.id}`
-    : `https://player.videasy.net/tv/${currentItem.id}`;
+  const embedURL =
+    server === 'vidsrc.cc'
+      ? `https://vidsrc.cc/v2/embed/tv/${currentItem.id}`
+      : server === 'vidsrc.me'
+      ? `https://vidsrc.net/embed/tv/?tmdb=${currentItem.id}`
+      : `https://player.videasy.net/tv/${currentItem.id}`;
 
   const videoFrame = document.getElementById('modal-video');
   if (videoFrame) videoFrame.src = embedURL;
@@ -159,15 +107,15 @@ function getStars(vote) {
   return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - half);
 }
 
+// Infinite scroll
 window.addEventListener('scroll', () => {
-  const scrollThreshold = 300;
-  if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - scrollThreshold)) {
+  if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300) {
     fetchNextPage();
   }
 });
 
-genreSelect.addEventListener('change', resetMovies);
-yearSelect.addEventListener('change', resetMovies);
+genreSelect.addEventListener('change', resetAnime);
+yearSelect.addEventListener('change', resetAnime);
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal').addEventListener('click', e => {
   if (e.target.id === 'modal') closeModal();
@@ -179,5 +127,4 @@ window.addEventListener('keydown', e => {
 // Initial Load
 fetchGenres();
 populateYearDropdown();
-resetMovies();
-</script>
+resetAnime();
