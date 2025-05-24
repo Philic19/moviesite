@@ -90,7 +90,7 @@
   <div class="footer-content">
     <p>&copy; Xe Yiu Movies. All rights reserved.</p>
     <div class="footer-links">
-      <a href="#">Disclaimer</a>
+     <a href="#" onclick="openDisclaimerModal()">Disclaimer</a>
       <a href="#">About Us</a>
       <a href="#">Contact Us</a>
     </div>
@@ -99,6 +99,22 @@
 
 <div id="loader" style="display:none; text-align:center; padding: 20px;">⏳ Loading...</div>
 
+<!-- Disclaimer Modal -->
+<div class="modal" id="disclaimer-modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeDisclaimerModal()" style="color: red;">&times;</span>
+    <h2>Disclaimer</h2>
+    <p>
+      This website does not host or upload any video/media files. All content such as posters, summaries, and streaming links are sourced from publicly available platforms or third-party services. We do not claim ownership of any media content.
+    </p>
+    <p>
+      All trademarks, logos, and media are the property of their respective owners. If you believe your rights are being violated, please <a href="#">contact us</a> and we will take appropriate action.
+    </p>
+    <p>
+      Use this website at your own discretion. We are not liable for any issues or damages that may arise from using external links or information on this site.
+    </p>
+  </div>
+</div>
 
   
 </body>
