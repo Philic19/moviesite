@@ -50,9 +50,9 @@ function populateYearDropdown() {
 async function fetchFilteredMovies(page = 1) {
   const genre = genreSelect.value;
   const year = yearSelect.value;
-  const cacheKey = `${genre}-${year}-${page}`;
+  const cacheKey = `${genre || 'all'}-${year || 'all'}-${page}`;
 
-  // Show skeletons
+  // Show loading state
   latestMoviesList.innerHTML = '<p>Loading...</p>';
   pageIndicator.textContent = `Loading...`;
 
@@ -74,7 +74,11 @@ async function fetchFilteredMovies(page = 1) {
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
 
-    movieCache.set(cacheKey, { results: data.results || [], page, totalPages: Math.min(100, data.total_pages) });
+    movieCache.set(cacheKey, {
+      results: data.results || [],
+      page,
+      totalPages: Math.min(100, data.total_pages),
+    });
 
     currentPage = page;
     totalPages = data.total_pages > 100 ? 100 : data.total_pages;
@@ -83,6 +87,7 @@ async function fetchFilteredMovies(page = 1) {
   } catch (error) {
     console.error("Error Fetching Filtered Movies:", error);
     displayLatestMovies([]);
+    updatePaginationButtons();
   }
 }
 
@@ -96,7 +101,9 @@ function displayLatestMovies(movies) {
 
   movies.forEach(movie => {
     const img = document.createElement('img');
-    img.src = movie.poster_path ? `https://image.tmdb.org/t/p/w342${movie.poster_path}` : '';
+    img.src = movie.poster_path
+      ? `https://image.tmdb.org/t/p/w342${movie.poster_path}`
+      : 'https://via.placeholder.com/342x513?text=No+Image'; // fallback placeholder
     img.alt = movie.title || movie.name || 'No title';
     img.title = movie.title || movie.name || '';
     img.loading = 'lazy';
@@ -113,7 +120,7 @@ function displayLatestMovies(movies) {
 }
 
 function updatePaginationButtons() {
-  pageIndicator.textContent = `Page ${currentPage}`;
+  pageIndicator.textContent = `Page ${currentPage} / ${totalPages}`;
   prevBtn.disabled = currentPage <= 1;
   nextBtn.disabled = currentPage >= totalPages;
 }
@@ -192,7 +199,30 @@ window.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
 });
 
-// Initialize filters and load first page
-fetchGenres();
-populateYearDropdown();
-fetchFilteredMovies(1);
+// About modal
+const aboutModal = document.getElementById('about-modal');
+const openAboutBtn = document.getElementById('open-about-btn');
+const closeAboutBtn = document.getElementById('close-about-btn');
+if (aboutModal && openAboutBtn && closeAboutBtn) {
+  openAboutBtn.addEventListener('click', e => {
+    e.preventDefault();
+    aboutModal.style.display = 'flex';
+  });
+  closeAboutBtn.addEventListener('click', () => aboutModal.style.display = 'none');
+  aboutModal.addEventListener('click', e => {
+    if (e.target === aboutModal) aboutModal.style.display = 'none';
+  });
+}
+function openDisclaimerModal() {
+  document.getElementById('disclaimer-modal').style.display = 'flex';
+}
+function closeDisclaimerModal() {
+  document.getElementById('disclaimer-modal').style.display = 'none';
+}
+
+// Wait for DOM content to be loaded before initializing
+document.addEventListener('DOMContentLoaded', () => {
+  fetchGenres();
+  populateYearDropdown();
+  fetchFilteredMovies(1);
+});
