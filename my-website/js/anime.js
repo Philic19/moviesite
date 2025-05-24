@@ -1,6 +1,6 @@
 const API_KEY = "277256e815b05aae4f56dd5dd45eaa97";
 const BASE_URL = "https://api.themoviedb.org/3";
-const mediaType = "tv"; // 'tv' for anime shows
+const mediaType = "tv"; // Anime are TV shows in TMDB
 
 const latestMoviesList = document.getElementById("anime-list");
 const yearSelect = document.getElementById("year-select");
@@ -10,11 +10,10 @@ const loader = document.getElementById("loader");
 let currentPage = 1;
 let totalPages = 1;
 let isLoading = false;
-const movieCache = new Map();
 
 async function fetchNextPage() {
   if (isLoading) return;
-  if (currentPage > totalPages || currentPage > 100) return; // TMDB max 100 pages
+  if (currentPage > totalPages || currentPage > 100) return;
 
   isLoading = true;
   loader.style.display = "block";
@@ -22,19 +21,7 @@ async function fetchNextPage() {
 
   const year = yearSelect.value;
 
-  const cacheKey = `${year}-${currentPage}`;
-  if (movieCache.has(cacheKey)) {
-    const cached = movieCache.get(cacheKey);
-    appendShows(cached.results);
-    totalPages = cached.totalPages;
-    currentPage++;
-    isLoading = false;
-    loader.style.display = "none";
-    pageIndicator.textContent = `Page ${currentPage - 1}`;
-    return;
-  }
-
-let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_original_language=ja&with_genres=16&sort_by=popularity.desc`;
+  let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_original_language=ja&with_genres=16&sort_by=popularity.desc`;
 
   if (year) {
     url += `&first_air_date_year=${year}`;
@@ -46,7 +33,6 @@ let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_o
     const data = await res.json();
 
     totalPages = data.total_pages;
-    movieCache.set(cacheKey, { results: data.results || [], totalPages });
 
     appendShows(data.results || []);
 
@@ -62,10 +48,8 @@ let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_o
 }
 
 function appendShows(shows) {
-  if (!shows.length) {
-    const endMsg = document.createElement("p");
-    endMsg.textContent = "No more anime found.";
-    latestMoviesList.appendChild(endMsg);
+  if (!shows.length && currentPage === 1) {
+    latestMoviesList.innerHTML = "<p>No anime found.</p>";
     return;
   }
 
@@ -108,11 +92,11 @@ function resetResults() {
   currentPage = 1;
   totalPages = 1;
   latestMoviesList.innerHTML = "";
-  movieCache.clear();
   fetchNextPage();
 }
 
 function showDetails(show) {
+  // Your existing modal or alert code can be replaced here
   alert(`Title: ${show.name}\nOverview: ${show.overview || "No description."}`);
 }
 
