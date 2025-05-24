@@ -27,9 +27,12 @@
     </div>
   </div>
 
-  <div class="banner" id="banner">
-    <h1 id="banner-title"></h1>
-  </div>
+ <div class="banner" id="banner" style="position: relative; cursor: pointer;">
+  <button id="banner-prev" class="banner-arrow" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;">&#8592;</button>
+  <h1 id="banner-title"></h1>
+  <button id="banner-next" class="banner-arrow" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10;">&#8594;</button>
+</div>
+
 
   <div class="genre-filter-container" style="text-align:center; margin: 20px;">
     <label for="genre-filter"><strong>Filter by Genre:</strong></label>
