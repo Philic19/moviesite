@@ -57,7 +57,7 @@ function displayList(items, containerId) {
   container.innerHTML = '';
   items.forEach(item => {
     const img = document.createElement('img');
-    img.src = `${IMG_URL}${item.poster_path}`;
+    img.src = item.poster_path ? `${IMG_URL}${item.poster_path}` : 'fallback.jpg';
     img.alt = item.title || item.name || 'Media Thumbnail';
     img.onclick = () => showDetails(item);
     img.loading = 'lazy';
