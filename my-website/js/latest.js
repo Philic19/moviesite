@@ -4,19 +4,21 @@ const IMG_URL = 'https://image.tmdb.org/t/p/original';
 
 let currentItem = null;
 let currentPage = 1;
-let totalPages = 100; // TMDB allows up to 100 pages max
+let totalPages = Infinity; // unknown at start, updated on fetch
+let isLoading = false;
 
 const latestMoviesList = document.getElementById('latest-movies-list');
-const prevBtn = document.getElementById('latest-prev-btn');
-const nextBtn = document.getElementById('latest-next-btn');
+// Remove prevBtn and nextBtn usage since infinite scroll
+// const prevBtn = document.getElementById('latest-prev-btn');
+// const nextBtn = document.getElementById('latest-next-btn');
 const pageIndicator = document.getElementById('latest-page-indicator');
 
 const genreSelect = document.getElementById('genre-select');
 const yearSelect = document.getElementById('year-select');
 
-const mediaType = 'movie'; // keep as movie for this filter example
+const mediaType = 'movie';
 
-const movieCache = new Map(); // key: `${genre}-${year}-${page}`, value: movie list
+const movieCache = new Map(); // cache with key `${genre}-${year}-${page}`
 
 // Fetch genres and populate the genre dropdown
 async function fetchGenres() {
@@ -46,26 +48,29 @@ function populateYearDropdown() {
   }
 }
 
-// Fetch movies with filters applied
-async function fetchFilteredMovies(page = 1) {
+// Fetch next page of filtered movies
+async function fetchNextPage() {
+  if (isLoading) return;
+  if (currentPage > totalPages || currentPage > 100) return; // TMDB max 100 pages
+
+  isLoading = true;
+  pageIndicator.textContent = `Loading page ${currentPage}...`;
+
   const genre = genreSelect.value;
   const year = yearSelect.value;
-  const cacheKey = `${genre || 'all'}-${year || 'all'}-${page}`;
-
-  // Show loading state
-  latestMoviesList.innerHTML = '<p>Loading...</p>';
-  pageIndicator.textContent = `Loading...`;
+  const cacheKey = `${genre}-${year}-${currentPage}`;
 
   if (movieCache.has(cacheKey)) {
     const cached = movieCache.get(cacheKey);
-    displayLatestMovies(cached.results);
-    currentPage = cached.page;
+    appendMovies(cached.results);
     totalPages = cached.totalPages;
-    updatePaginationButtons();
+    currentPage++;
+    isLoading = false;
+    pageIndicator.textContent = `Page ${currentPage - 1}`;
     return;
   }
 
-  let url = `${BASE_URL}/discover/movie?api_key=${API_KEY}&page=${page}`;
+  let url = `${BASE_URL}/discover/movie?api_key=${API_KEY}&page=${currentPage}`;
   if (genre) url += `&with_genres=${genre}`;
   if (year) url += `&primary_release_year=${year}`;
 
@@ -74,36 +79,31 @@ async function fetchFilteredMovies(page = 1) {
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
 
-    movieCache.set(cacheKey, {
-      results: data.results || [],
-      page,
-      totalPages: Math.min(100, data.total_pages),
-    });
+    totalPages = data.total_pages;
+    movieCache.set(cacheKey, { results: data.results || [], page: currentPage, totalPages });
 
-    currentPage = page;
-    totalPages = data.total_pages > 100 ? 100 : data.total_pages;
-    displayLatestMovies(data.results || []);
-    updatePaginationButtons();
+    appendMovies(data.results || []);
+
+    currentPage++;
+    pageIndicator.textContent = `Page ${currentPage - 1}`;
   } catch (error) {
-    console.error("Error Fetching Filtered Movies:", error);
-    displayLatestMovies([]);
-    updatePaginationButtons();
+    console.error("Error fetching movies:", error);
+  } finally {
+    isLoading = false;
   }
 }
 
-function displayLatestMovies(movies) {
-  latestMoviesList.innerHTML = '';
-
-  if (movies.length === 0) {
-    latestMoviesList.textContent = 'No movies found.';
+function appendMovies(movies) {
+  if (!movies.length) {
+    const endMsg = document.createElement('p');
+    endMsg.textContent = 'No more movies found.';
+    latestMoviesList.appendChild(endMsg);
     return;
   }
 
   movies.forEach(movie => {
     const img = document.createElement('img');
-    img.src = movie.poster_path
-      ? `https://image.tmdb.org/t/p/w342${movie.poster_path}`
-      : 'https://via.placeholder.com/342x513?text=No+Image'; // fallback placeholder
+    img.src = movie.poster_path ? `https://image.tmdb.org/t/p/w342${movie.poster_path}` : '';
     img.alt = movie.title || movie.name || 'No title';
     img.title = movie.title || movie.name || '';
     img.loading = 'lazy';
@@ -119,12 +119,16 @@ function displayLatestMovies(movies) {
   });
 }
 
-function updatePaginationButtons() {
-  pageIndicator.textContent = `Page ${currentPage} / ${totalPages}`;
-  prevBtn.disabled = currentPage <= 1;
-  nextBtn.disabled = currentPage >= totalPages;
+// Reset movies and cache on filter change
+function resetMovies() {
+  latestMoviesList.innerHTML = '';
+  currentPage = 1;
+  totalPages = Infinity;
+  movieCache.clear();
+  fetchNextPage();
 }
 
+// Show movie details modal
 function showDetails(item) {
   currentItem = item;
 
@@ -143,6 +147,7 @@ function showDetails(item) {
   changeServer();
 }
 
+// Change video server iframe src
 function changeServer() {
   if (!currentItem) return;
   const server = document.getElementById('server').value;
@@ -175,22 +180,22 @@ function getStars(vote) {
   return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - half);
 }
 
-// Event listeners
-prevBtn.addEventListener('click', () => {
-  if (currentPage > 1) {
-    fetchFilteredMovies(currentPage - 1);
+// Remove prev/next btn listeners as infinite scroll replaces them
+
+// Listen to scroll event for infinite scrolling
+window.addEventListener('scroll', () => {
+  const scrollThreshold = 300; // pixels from bottom to trigger loading
+
+  if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - scrollThreshold)) {
+    fetchNextPage();
   }
 });
 
-nextBtn.addEventListener('click', () => {
-  if (currentPage < totalPages) {
-    fetchFilteredMovies(currentPage + 1);
-  }
-});
+// Filter change resets movies and starts from page 1
+genreSelect.addEventListener('change', resetMovies);
+yearSelect.addEventListener('change', resetMovies);
 
-genreSelect.addEventListener('change', () => fetchFilteredMovies(1));
-yearSelect.addEventListener('change', () => fetchFilteredMovies(1));
-
+// Modal close handlers
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal').addEventListener('click', e => {
   if (e.target.id === 'modal') closeModal();
@@ -199,7 +204,7 @@ window.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
 });
 
-// About modal
+// About modal handlers
 const aboutModal = document.getElementById('about-modal');
 const openAboutBtn = document.getElementById('open-about-btn');
 const closeAboutBtn = document.getElementById('close-about-btn');
@@ -213,6 +218,7 @@ if (aboutModal && openAboutBtn && closeAboutBtn) {
     if (e.target === aboutModal) aboutModal.style.display = 'none';
   });
 }
+
 function openDisclaimerModal() {
   document.getElementById('disclaimer-modal').style.display = 'flex';
 }
@@ -220,9 +226,7 @@ function closeDisclaimerModal() {
   document.getElementById('disclaimer-modal').style.display = 'none';
 }
 
-// Wait for DOM content to be loaded before initializing
-document.addEventListener('DOMContentLoaded', () => {
-  fetchGenres();
-  populateYearDropdown();
-  fetchFilteredMovies(1);
-});
+// Initialize genres, years and first load
+fetchGenres();
+populateYearDropdown();
+resetMovies();
