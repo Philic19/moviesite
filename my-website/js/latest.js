@@ -5,6 +5,16 @@ const latestMoviesList = document.getElementById('latest-movies-list');
 const prevBtn = document.getElementById('latest-prev-btn');
 const nextBtn = document.getElementById('latest-next-btn');
 const pageIndicator = document.getElementById('latest-page-indicator');
+const modal = document.getElementById('modal');
+const modalClose = document.getElementById('modal-close');
+const modalImage = document.getElementById('modal-image');
+const modalTitle = document.getElementById('modal-title');
+const modalRating = document.getElementById('modal-rating');
+const modalDescription = document.getElementById('modal-description');
+const modalVideo = document.getElementById('modal-video');
+const serverSelector = document.getElementById('server');
+const serverSelectorContainer = document.querySelector('.server-selector');
+
 
 let currentPage = 1;
 let totalPages = 1; // will be updated from API response
@@ -52,8 +62,37 @@ function updatePaginationButtons() {
 }
 
 function openModalWithMovie(movie) {
-  alert(`Selected movie: ${movie.title}`);
+  modal.style.display = 'flex';
+
+  modalImage.src = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '';
+  modalTitle.textContent = movie.title || 'No title';
+  modalDescription.textContent = movie.overview || 'No description available.';
+  
+  // Show star rating (out of 5 stars)
+  modalRating.innerHTML = '';
+  const ratingOutOfFive = Math.round(movie.vote_average / 2);
+  for (let i = 0; i < 5; i++) {
+    const star = document.createElement('span');
+    star.className = 'fa fa-star' + (i < ratingOutOfFive ? ' checked' : '');
+    modalRating.appendChild(star);
+  }
+  
+  // Hide video and server selector (unless you want to handle streaming here)
+  modalVideo.style.display = 'none';
+  serverSelectorContainer.style.display = 'none';
 }
+
+// Close modal handler
+modalClose.onclick = () => {
+  modal.style.display = 'none';
+};
+
+// Close modal on outside click
+window.onclick = (event) => {
+  if (event.target === modal) {
+    modal.style.display = 'none';
+  }
+};
 
 // Button event listeners
 if (prevBtn && nextBtn) {
