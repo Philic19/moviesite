@@ -1,25 +1,18 @@
-const fetch = require('node-fetch');
 const fs = require('fs');
+const path = require('path');
+const fetch = require('node-fetch');
 
 const API_KEY = process.env.TMDB_API_KEY;
-const URL = `https://api.themoviedb.org/3/movie/now_playing?api_key=${API_KEY}&language=en-US&page=1`;
+const BASE_URL = 'https://api.themoviedb.org/3';
 
 async function fetchMovies() {
-  const res = await fetch(URL);
-  if (!res.ok) throw new Error('Failed to fetch movies');
+  const url = `${BASE_URL}/movie/now_playing?api_key=${API_KEY}&language=en-US&page=1`;
+  const res = await fetch(url);
   const data = await res.json();
-  return data.results;
+
+  const filePath = path.join(__dirname, '../data/latest.json');
+  fs.writeFileSync(filePath, JSON.stringify(data.results, null, 2));
+  console.log(`Fetched ${data.results.length} movies to latest.json`);
 }
 
-async function main() {
-  try {
-    const movies = await fetchMovies();
-    fs.writeFileSync('./data/latest-movies.json', JSON.stringify(movies, null, 2));
-    console.log('Movies saved!');
-  } catch (err) {
-    console.error(err);
-    process.exit(1);
-  }
-}
-
-main();
+fetchMovies();
