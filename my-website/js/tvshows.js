@@ -14,17 +14,17 @@ const pageIndicator = document.getElementById('latest-page-indicator');
 const mediaType = 'tvShows'; // 🔁 CHANGED from 'movie' to 'tv'
 
 async function fetchLatestMovies(page = 1) {
-  try {
-    const res = await fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${API_KEY}&page=${page}`);
-    const data = await res.json();
-
-    currentPage = page;
-    displayLatestMovies(data.results || []);
-    updatePaginationButtons();
-  } catch (error) {
-    console.error("Error Fetching Trending:", error);
-    displayLatestMovies([]);
+ try {
+  const res = await fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${API_KEY}&page=${page}`);
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
   }
+  const data = await res.json();
+  // Proceed with displaying data
+} catch (error) {
+  console.error("Error fetching trending TV shows:", error);
+  // Display an error message to the user
+}
 }
 
 function displayLatestMovies(movies) {
