@@ -219,4 +219,34 @@ window.addEventListener('click', function(e) {
 
 
 
-init();
+let currentBannerIndex = 0;
+
+function displayBannerFromList(index) {
+  const movie = currentItems.movies[index];
+  if (!movie) return;
+  displayBanner(movie);
+
+  document.getElementById('banner').onclick = () => {
+    showDetails(movie);
+  };
+}
+
+document.getElementById('banner-prev').addEventListener('click', (e) => {
+  e.stopPropagation();
+  currentBannerIndex = (currentBannerIndex - 1 + currentItems.movies.length) % currentItems.movies.length;
+  displayBannerFromList(currentBannerIndex);
+});
+
+document.getElementById('banner-next').addEventListener('click', (e) => {
+  e.stopPropagation();
+  currentBannerIndex = (currentBannerIndex + 1) % currentItems.movies.length;
+  displayBannerFromList(currentBannerIndex);
+});
+
+async function startApp() {
+  await init();
+  currentBannerIndex = Math.floor(Math.random() * currentItems.movies.length);
+  displayBannerFromList(currentBannerIndex);
+}
+
+startApp();
