@@ -1,34 +1,34 @@
+// scripts/fetch-latest-movies.js
+const fetch = require('node-fetch');
+const fs = require('fs');
 
-name: Fetch Latest Movies
+const API_KEY = process.env.TMDB_API_KEY;
+const BASE_URL = 'https://api.themoviedb.org/3/movie/now_playing';
 
-on:
-  push:
-    branches:
-      - main  # or your main branch name
-  workflow_dispatch:  # lets you run manually if you want
+async function fetchPage(page) {
+  const res = await fetch(`${BASE_URL}?api_key=${API_KEY}&language=en-US&page=${page}`);
+  if (!res.ok) throw new Error(`Failed to fetch page ${page}`);
+  return res.json();
+}
 
-jobs:
-  fetch-data:
-    runs-on: ubuntu-latest
+(async () => {
+  try {
+    // Fetch first page to get total_pages
+    const firstPageData = await fetchPage(1);
+    const totalPages = firstPageData.total_pages;
 
-    steps:
-      - uses: actions/checkout@v3
+    // Save first page results
+    fs.writeFileSync('data/latest-movies-page-1.json', JSON.stringify(firstPageData.results, null, 2));
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+    // (Optional) Fetch and save more pages, or just do the first page
+    // for (let p = 2; p <= totalPages && p <= 5; p++) {
+    //   const pageData = await fetchPage(p);
+    //   fs.writeFileSync(`data/latest-movies-page-${p}.json`, JSON.stringify(pageData.results, null, 2));
+    // }
 
-      - name: Fetch latest movies
-        env:
-          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
-        run: |
-          node scripts/fetch-latest-movies.js
-
-      - name: Commit & push updated JSON
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/latest-movies.json
-          git commit -m "Update latest movies data [skip ci]" || echo "No changes"
-          git push
+    console.log('Fetched and saved latest movies JSON files.');
+  } catch (e) {
+    console.error(e);
+    process.exit(1);
+  }
+})();
