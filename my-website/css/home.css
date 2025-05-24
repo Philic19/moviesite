@@ -1,5 +1,5 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; background: #111; color: #fff; }
+    body { font-family: Arial, sans-serif; background: #111; color: #fff; padding-top:60px; }
     body.light-mode {
                       background: #f9f9f9;
                       color: #111;
@@ -21,8 +21,10 @@ body.light-mode .modal-content {
         display: flex; 
         justify-content: space-between; align-items: center;
         padding: 10px; background: #222;
-        position: relative; /* change to relative to Ensure positioning context */
+        position: fixed; /* change to relative to Ensure positioning context */
         top: 0;
+        left: 0;
+        right: 0;
         z-index: 100;
     }
 
