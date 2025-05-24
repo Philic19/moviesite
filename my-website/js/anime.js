@@ -4,172 +4,31 @@ const IMG_URL = 'https://image.tmdb.org/t/p/original';
 
 let currentItem = null;
 let currentPage = 1;
-let totalPages = Infinity; // unknown at start, updated on fetch
+let totalPages = Infinity; // unknown at start
 let isLoading = false;
 
-const latestMoviesList = document.getElementById('latest-movies-list');
-const pageIndicator = document.getElementById('latest-page-indicator');
+const animeList = document.getElementById('anime-list');       // Your anime container
+const pageIndicator = document.getElementById('anime-page-indicator');
 
-const genreSelect = document.getElementById('genre-select');
 const yearSelect = document.getElementById('year-select');
 
-const mediaType = 'movie';
+// Cache for fetched anime by key (year-page)
+const animeCache = new Map();
 
-const movieCache = new Map(); // cache with key `${genre}-${year}-${page}`
-
-// Search modal and elements
-const searchModal = document.getElementById('search-modal');
-const navbarSearchInput = document.getElementById('search-input-navbar');
-const searchInput = document.getElementById('search-input');
-const searchResults = document.getElementById('search-results');
-const searchCloseBtn = document.getElementById('search-close-btn');
-
-// Open search modal on navbar search input click
-navbarSearchInput.addEventListener('click', () => {
-  searchModal.style.display = 'block';
-  searchInput.value = '';
-  searchResults.innerHTML = '';
-  searchInput.focus();
-});
-
-// Close search modal on close button click
-searchCloseBtn.addEventListener('click', () => {
-  searchModal.style.display = 'none';
-  searchInput.value = '';
-  searchResults.innerHTML = '';
-});
-
-// Close search modal if clicking outside input/results
-searchModal.addEventListener('click', e => {
-  if (e.target === searchModal) {
-    searchModal.style.display = 'none';
-    searchInput.value = '';
-    searchResults.innerHTML = '';
-  }
-});
-
-// Search TMDB multi endpoint as user types, debounce to avoid too many requests
-let searchTimeout = null;
-searchInput.addEventListener('input', () => {
-  clearTimeout(searchTimeout);
-  const query = searchInput.value.trim();
-  if (!query) {
-    searchResults.innerHTML = '';
-    return;
-  }
-
-  searchTimeout = setTimeout(() => {
-    searchTMDB(query);
-  }, 400);
-});
-
-async function searchTMDB(query) {
-  searchResults.innerHTML = '<p style="color:#fff;">Searching...</p>';
-
-  try {
-    const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&page=1`);
-    if (!res.ok) throw new Error(`Error: ${res.status}`);
-    const data = await res.json();
-
-    if (!data.results || data.results.length === 0) {
-      searchResults.innerHTML = '<p style="color:#fff;">No results found.</p>';
-      return;
-    }
-
-    renderSearchResults(data.results);
-  } catch (err) {
-    console.error('Search error:', err);
-    searchResults.innerHTML = '<p style="color:#f00;">Search failed. Try again.</p>';
-  }
-}
-
-function renderSearchResults(results) {
-  searchResults.innerHTML = '';
-  results.forEach(item => {
-    // Skip if no title or name
-    if (!item.title && !item.name) return;
-
-    const div = document.createElement('div');
-    div.style.cursor = 'pointer';
-    div.style.width = '150px';
-    div.style.color = '#fff';
-    div.style.textAlign = 'center';
-
-    const img = document.createElement('img');
-    img.src = item.poster_path ? `https://image.tmdb.org/t/p/w154${item.poster_path}` : '';
-    img.alt = item.title || item.name;
-    img.loading = 'lazy';
-    img.style.width = '100%';
-    img.style.borderRadius = '8px';
-    img.style.marginBottom = '5px';
-
-    const title = document.createElement('div');
-    title.textContent = item.title || item.name || 'No title';
-    title.style.fontSize = '14px';
-    title.style.overflow = 'hidden';
-    title.style.textOverflow = 'ellipsis';
-    title.style.whiteSpace = 'nowrap';
-
-    div.appendChild(img);
-    div.appendChild(title);
-
-    div.onclick = () => {
-      showDetails({
-        ...item,
-        media_type: item.media_type || (item.first_air_date ? 'tv' : 'movie'),
-      });
-      searchModal.style.display = 'none';
-      searchInput.value = '';
-      searchResults.innerHTML = '';
-    };
-
-    searchResults.appendChild(div);
-  });
-}
-
-// Fetch genres and populate the genre dropdown
-async function fetchGenres() {
-  try {
-    const res = await fetch(`${BASE_URL}/genre/movie/list?api_key=${API_KEY}`);
-    if (!res.ok) throw new Error('Failed to fetch genres');
-    const data = await res.json();
-    data.genres.forEach(genre => {
-      const option = document.createElement('option');
-      option.value = genre.id;
-      option.textContent = genre.name;
-      genreSelect.appendChild(option);
-    });
-  } catch (err) {
-    console.error('Error loading genres:', err);
-  }
-}
-
-// Populate year dropdown for last 30 years
-function populateYearDropdown() {
-  const currentYear = new Date().getFullYear();
-  for (let year = currentYear; year >= currentYear - 30; year--) {
-    const option = document.createElement('option');
-    option.value = year;
-    option.textContent = year;
-    yearSelect.appendChild(option);
-  }
-}
-
-// Fetch next page of filtered movies
+// Fetch next page of anime TV shows (Japanese, animation genre)
 async function fetchNextPage() {
   if (isLoading) return;
-  if (currentPage > totalPages || currentPage > 100) return; // TMDB max 100 pages
+  if (currentPage > totalPages || currentPage > 100) return;
 
   isLoading = true;
   pageIndicator.textContent = `Loading page ${currentPage}...`;
 
-  const genre = genreSelect.value;
   const year = yearSelect.value;
-  const cacheKey = `${genre}-${year}-${currentPage}`;
+  const cacheKey = `${year}-${currentPage}`;
 
-  if (movieCache.has(cacheKey)) {
-    const cached = movieCache.get(cacheKey);
-    appendMovies(cached.results);
+  if (animeCache.has(cacheKey)) {
+    const cached = animeCache.get(cacheKey);
+    appendAnime(cached.results);
     totalPages = cached.totalPages;
     currentPage++;
     isLoading = false;
@@ -177,9 +36,10 @@ async function fetchNextPage() {
     return;
   }
 
-   let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_original_language=ja&with_genres=16&sort_by=popularity.desc`;
- if (genre) url += `&with_genres=${genre}`;
-  if (year) url += `&primary_release_year=${year}`;
+  // TMDB Discover TV endpoint filtered for anime:
+  // with_original_language=ja, with_genres=16 (Animation), sorted by popularity desc
+  let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&with_original_language=ja&with_genres=16&sort_by=popularity.desc&page=${currentPage}`;
+  if (year) url += `&first_air_date_year=${year}`;  // Use first_air_date_year for TV shows filtering
 
   try {
     const res = await fetch(url);
@@ -187,59 +47,59 @@ async function fetchNextPage() {
     const data = await res.json();
 
     totalPages = data.total_pages;
-    movieCache.set(cacheKey, { results: data.results || [], page: currentPage, totalPages });
+    animeCache.set(cacheKey, { results: data.results || [], totalPages });
 
-    appendMovies(data.results || []);
+    appendAnime(data.results || []);
 
     currentPage++;
     pageIndicator.textContent = `Page ${currentPage - 1}`;
   } catch (error) {
-    console.error("Error fetching movies:", error);
+    console.error("Error fetching anime:", error);
   } finally {
     isLoading = false;
   }
 }
 
-function appendMovies(movies) {
-  if (!movies.length) {
-    const endMsg = document.createElement('p');
-    endMsg.textContent = 'No more movies found.';
-    latestMoviesList.appendChild(endMsg);
+function appendAnime(animeShows) {
+  if (!animeShows.length) {
+    if (currentPage === 1) {
+      animeList.innerHTML = '<p>No anime found.</p>';
+    }
     return;
   }
 
-  movies.forEach(movie => {
+  animeShows.forEach(show => {
     const img = document.createElement('img');
-    img.src = movie.poster_path ? `https://image.tmdb.org/t/p/w342${movie.poster_path}` : '';
-    img.alt = movie.title || movie.name || 'No title';
-    img.title = movie.title || movie.name || '';
+    img.src = show.poster_path ? `https://image.tmdb.org/t/p/w342${show.poster_path}` : '';
+    img.alt = show.name || 'No title';
+    img.title = show.name || '';
     img.loading = 'lazy';
     img.style.cursor = 'pointer';
     img.style.minHeight = '250px';
 
     img.onclick = () => showDetails({
-      ...movie,
-      media_type: mediaType
+      ...show,
+      media_type: 'tv'
     });
 
-    latestMoviesList.appendChild(img);
+    animeList.appendChild(img);
   });
 }
 
-// Reset movies and cache on filter change
-function resetMovies() {
-  latestMoviesList.innerHTML = '';
+// Reset and reload anime list on year filter change
+function resetAnime() {
+  animeList.innerHTML = '';
   currentPage = 1;
   totalPages = Infinity;
-  movieCache.clear();
+  animeCache.clear();
   fetchNextPage();
 }
 
-// Show movie details modal
+// Show details modal (reuse your existing modal code)
 function showDetails(item) {
   currentItem = item;
 
-  document.getElementById('modal-title').textContent = item.title || item.name || 'No title';
+  document.getElementById('modal-title').textContent = item.name || 'No title';
   document.getElementById('modal-description').textContent = item.overview || 'No description.';
   document.getElementById('modal-image').src = item.poster_path ? `${IMG_URL}${item.poster_path}` : '';
   document.getElementById('modal-rating').innerHTML = getStars(item.vote_average || 0);
@@ -254,7 +114,7 @@ function showDetails(item) {
   changeServer();
 }
 
-// Change video server iframe src
+// Change video server iframe src (unchanged)
 function changeServer() {
   if (!currentItem) return;
   const server = document.getElementById('server').value;
@@ -289,16 +149,15 @@ function getStars(vote) {
 
 // Infinite scroll
 window.addEventListener('scroll', () => {
-  const scrollThreshold = 300; // pixels from bottom to trigger loading
+  const scrollThreshold = 300; // px from bottom
 
   if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - scrollThreshold)) {
     fetchNextPage();
   }
 });
 
-// Filter change resets movies and starts from page 1
-genreSelect.addEventListener('change', resetMovies);
-yearSelect.addEventListener('change', resetMovies);
+// Filter change handler
+yearSelect.addEventListener('change', resetAnime);
 
 // Modal close handlers
 document.getElementById('modal-close').addEventListener('click', closeModal);
@@ -309,29 +168,16 @@ window.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
 });
 
-// About modal handlers
-const aboutModal = document.getElementById('about-modal');
-const openAboutBtn = document.getElementById('open-about-btn');
-const closeAboutBtn = document.getElementById('close-about-btn');
-if (aboutModal && openAboutBtn && closeAboutBtn) {
-  openAboutBtn.addEventListener('click', e => {
-    e.preventDefault();
-    aboutModal.style.display = 'flex';
-  });
-  closeAboutBtn.addEventListener('click', () => aboutModal.style.display = 'none');
-  aboutModal.addEventListener('click', e => {
-    if (e.target === aboutModal) aboutModal.style.display = 'none';
-  });
+// Initialize year dropdown and load first page
+function populateYearDropdown() {
+  const currentYear = new Date().getFullYear();
+  for (let year = currentYear; year >= currentYear - 30; year--) {
+    const option = document.createElement('option');
+    option.value = year;
+    option.textContent = year;
+    yearSelect.appendChild(option);
+  }
 }
 
-function openDisclaimerModal() {
-  document.getElementById('disclaimer-modal').style.display = 'flex';
-}
-function closeDisclaimerModal() {
-  document.getElementById('disclaimer-modal').style.display = 'none';
-}
-
-// Initialize genres, years and first load
-fetchGenres();
 populateYearDropdown();
-resetMovies();
+resetAnime();
