@@ -90,8 +90,8 @@
   <div class="footer-content">
     <p>&copy; Xe Yiu Movies. All rights reserved.</p>
     <div class="footer-links">
-     <a href="#" onclick="openDisclaimerModal()">Disclaimer</a>
-      <a href="#">About Us</a>
+      <a href="#" onclick="openDisclaimerModal()">Disclaimer</a>
+      <a href="#" id="open-about-btn">About Us</a>
       <a href="#">Contact Us</a>
     </div>
   </div>
@@ -113,6 +113,17 @@
     <p>
       Use this website at your own discretion. We are not liable for any issues or damages that may arise from using external links or information on this site.
     </p>
+  </div>
+</div>
+
+<!-- About Us Modal -->
+<div id="about-modal" class="modal" style="display:none; justify-content:center; align-items:center;">
+  <div class="modal-content" style="max-width:600px; position:relative;">
+    <span class="close" id="close-about-btn" style="color: red; cursor:pointer; position:absolute; top:10px; right:10px; font-size:24px;">&times;</span>
+    <h2>About Us</h2>
+    <p>Welcome to Xeyiu Collections, your one-stop destination for discovering trending movies, TV shows, and anime.</p>
+    <p>We aim to provide a seamless experience to explore popular entertainment from various genres and categories.</p>
+    <p>Thank you for visiting and being part of our growing community.</p>
   </div>
 </div>
 
