@@ -149,6 +149,15 @@ body.light-mode .modal-content {
                           z-index: 2;
 }
 
+.anime-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  padding: 20px;
+}
+
+
     .modal {
       position: fixed;
       top: 0; left: 0;
