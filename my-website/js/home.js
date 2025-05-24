@@ -227,6 +227,33 @@ async function init() {
   }
 }
 
+// About Us modal elements
+const aboutModal = document.getElementById('about-modal');
+const openAboutBtn = document.getElementById('open-about-btn');
+const closeAboutBtn = document.getElementById('close-about-btn');
+
+if (openAboutBtn && aboutModal && closeAboutBtn) {
+  openAboutBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    aboutModal.style.display = 'flex';
+  });
+
+  closeAboutBtn.addEventListener('click', () => {
+    aboutModal.style.display = 'none';
+  });
+
+  aboutModal.addEventListener('click', (e) => {
+    if (e.target === aboutModal) {
+      aboutModal.style.display = 'none';
+    }
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && aboutModal.style.display === 'flex') {
+      aboutModal.style.display = 'none';
+    }
+  });
+}
 
 window.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
