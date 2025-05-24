@@ -11,7 +11,6 @@ const genreSelect = document.getElementById('genre-select');
 const yearSelect = document.getElementById('year-select');
 const pageIndicator = document.getElementById('anime-page-indicator');
 
-// Populate genre dropdown
 async function fetchGenres() {
   try {
     const res = await fetch(`${BASE_URL}/genre/tv/list?api_key=${API_KEY}`);
@@ -27,7 +26,6 @@ async function fetchGenres() {
   }
 }
 
-// Populate year dropdown
 function populateYearDropdown() {
   const currentYear = new Date().getFullYear();
   for (let y = currentYear; y >= currentYear - 30; y--) {
@@ -38,20 +36,16 @@ function populateYearDropdown() {
   }
 }
 
-// Fetch and render anime
 async function fetchAnime() {
   if (isLoading || currentPage > totalPages) return;
   isLoading = true;
   pageIndicator.textContent = `Loading page ${currentPage}...`;
 
-  const selectedGenre = genreSelect.value;
+  const selectedGenre = genreSelect.value || '16'; // fallback to Animation genre
   const selectedYear = yearSelect.value;
 
-  let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&with_genres=16&page=${currentPage}&sort_by=popularity.desc`;
+  let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&with_genres=${selectedGenre}&sort_by=popularity.desc&page=${currentPage}`;
 
-  if (selectedGenre) {
-    url += `&with_genres=${selectedGenre}`;
-  }
   if (selectedYear) {
     url += `&first_air_date_year=${selectedYear}`;
   }
@@ -71,7 +65,6 @@ async function fetchAnime() {
   }
 }
 
-// Render anime cards
 function renderAnime(animes) {
   animes.forEach(anime => {
     const card = document.createElement('div');
@@ -90,7 +83,6 @@ function renderAnime(animes) {
   });
 }
 
-// Reset and reload anime list
 function reloadAnime() {
   currentPage = 1;
   totalPages = Infinity;
@@ -98,21 +90,15 @@ function reloadAnime() {
   fetchAnime();
 }
 
-// Event listeners for filters
 genreSelect.addEventListener('change', reloadAnime);
 yearSelect.addEventListener('change', reloadAnime);
 
-// Infinite Scroll
 window.addEventListener('scroll', () => {
-  if (
-    window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
-    !isLoading
-  ) {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 && !isLoading) {
     fetchAnime();
   }
 });
 
-// Initial setup
 fetchGenres();
 populateYearDropdown();
 fetchAnime();
