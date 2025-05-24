@@ -1,12 +1,18 @@
+// TMDB API key for authenticating requests to The Movie Database API
 const API_KEY = '277256e815b05aae4f56dd5dd45eaa97';
-const BASE_URL = 'https://api.themoviedb.org/3';
-const IMG_URL = 'https://image.tmdb.org/t/p/original';
+const BASE_URL = 'https://api.themoviedb.org/3'; // Base URL for TMDB API endpoints
+const IMG_URL = 'https://image.tmdb.org/t/p/original'; // Base URL for loading images like posters and backdrops from TMDB
 let currentItems = {
   movies: [],
   tvShows: [],
   anime: []
 };
+// Object to store fetched items grouped by type for easy access and filtering
 
+/**
+ * Fetch trending movies or TV shows by type ('movie' or 'tv') and page number.
+ * Uses the TMDB trending endpoint for the current week.
+ */
 async function fetchTrending(type, page = 1) {
   try {
     const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}&page=${page}`);
@@ -18,6 +24,10 @@ async function fetchTrending(type, page = 1) {
   }
 }
 
+/**
+ * Fetch trending TV shows and filter for anime.
+* Fetches up to 3 pages and concatenates all filtered anime results.
+ */
 async function fetchTrendingAnime() {
   let allResults = [];
   try {
@@ -35,6 +45,9 @@ async function fetchTrendingAnime() {
   return allResults;
 }
 
+/**
+ * Fetch list of genres for a given type ('movie' or 'tv').
+ */
 async function fetchGenres(type = 'movie') {
   try {
     const res = await fetch(`${BASE_URL}/genre/${type}/list?api_key=${API_KEY}`);
@@ -46,11 +59,18 @@ async function fetchGenres(type = 'movie') {
   }
 }
 
+/**
+ * Sets the banner background and title to highlight a featured movie or TV show.
+ */
 function displayBanner(item) {
   document.getElementById('banner').style.backgroundImage = `url(${IMG_URL}${item.backdrop_path})`;
   document.getElementById('banner-title').textContent = item.title || item.name;
 }
 
+/**
+ * Displays a list of movie/TV/anime thumbnails in a container element.
+ * Each thumbnail is clickable to show detailed info in a modal.
+ */
 function displayList(items, containerId) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
@@ -64,12 +84,14 @@ function displayList(items, containerId) {
   });
 }
 
+//Rating display
 function getStars(vote) {
   const full = Math.floor(vote / 2);
   const half = vote % 2 >= 1 ? 1 : 0;
   return '★'.repeat(full) + (half ? '⯨' : '') + '☆'.repeat(5 - full - half);
 }
 
+//show details of selected movie in a modal form
 function showDetails(item) {
   currentItem = item;
   localStorage.setItem('lastItem', JSON.stringify(item));
@@ -81,11 +103,13 @@ function showDetails(item) {
   document.getElementById('modal').style.display = 'flex';
 }
 
+//load video from selected server
 function changeServer() {
   const server = document.getElementById('server').value;
   const type = currentItem.media_type === "movie" ? "movie" : "tv";
   let embedURL = "";
 
+  //change server
   if (server === "vidsrc.cc") {
     embedURL = `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
   } else if (server === "vidsrc.me") {
@@ -97,21 +121,25 @@ function changeServer() {
   document.getElementById('modal-video').src = embedURL;
 }
 
+//close and clear video to stop playback
 function closeModal() {
   document.getElementById('modal').style.display = 'none';
   document.getElementById('modal-video').src = '';
 }
 
+//open search bar
 function openSearchModal() {
   document.getElementById('search-modal').style.display = 'flex';
   document.getElementById('search-input').focus();
 }
 
+//close search bar
 function closeSearchModal() {
   document.getElementById('search-modal').style.display = 'none';
   document.getElementById('search-results').innerHTML = '';
 }
 
+//show result on search bar and clickable
 async function searchTMDB() {
   const query = document.getElementById('search-input').value.trim();
   if (!query) {
@@ -142,6 +170,7 @@ async function searchTMDB() {
   }
 }
 
+//genre selection
 function populateGenreFilter(selectId, genres) {
   const select = document.getElementById(selectId);
   if (!select) return;
@@ -153,6 +182,7 @@ function populateGenreFilter(selectId, genres) {
   });
 }
 
+// filter genre selection on selected genre
 function addGenreFilterListener(selectId, itemsKey, containerId) {
   const select = document.getElementById(selectId);
   if (!select) return;
@@ -169,6 +199,7 @@ function addGenreFilterListener(selectId, itemsKey, containerId) {
   });
 }
 
+//initialize by fetch movies
 async function init() {
   const movies = await fetchTrending('movie');
   const tvShows = await fetchTrending('tv');
