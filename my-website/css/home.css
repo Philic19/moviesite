@@ -21,7 +21,7 @@ body.light-mode .modal-content {
         display: flex; 
         justify-content: space-between; align-items: center;
         padding: 10px; background: #222;
-        position: sticky; /* change to relative to Ensure positioning context */
+        position: relative; /* change to relative to Ensure positioning context */
         top: 0;
         z-index: 1000;
     }
