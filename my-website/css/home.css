@@ -149,6 +149,22 @@ body.light-mode .modal-content {
                           z-index: 2;
 }
 
+.anime-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.card {
+  width: 180px;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+}
+
+
 
     .modal {
       position: fixed;
