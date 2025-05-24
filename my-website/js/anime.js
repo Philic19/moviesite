@@ -71,7 +71,7 @@ async function fetchAnime() {
   }
 }
 
-// Render anime to DOM
+// Render anime cards
 function renderAnime(animes) {
   animes.forEach(anime => {
     const card = document.createElement('div');
@@ -98,9 +98,19 @@ function reloadAnime() {
   fetchAnime();
 }
 
-// Setup filters and initial load
+// Event listeners for filters
 genreSelect.addEventListener('change', reloadAnime);
 yearSelect.addEventListener('change', reloadAnime);
+
+// Infinite Scroll
+window.addEventListener('scroll', () => {
+  if (
+    window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
+    !isLoading
+  ) {
+    fetchAnime();
+  }
+});
 
 // Initial setup
 fetchGenres();
