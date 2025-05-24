@@ -16,6 +16,8 @@ const yearSelect = document.getElementById('year-select');
 
 const mediaType = 'movie'; // keep as movie for this filter example
 
+const movieCache = new Map(); // key: `${genre}-${year}-${page}`, value: movie list
+
 // Fetch genres and populate the genre dropdown
 async function fetchGenres() {
   try {
@@ -48,20 +50,31 @@ function populateYearDropdown() {
 async function fetchFilteredMovies(page = 1) {
   const genre = genreSelect.value;
   const year = yearSelect.value;
+  const cacheKey = `${genre}-${year}-${page}`;
+
+  // Show skeletons
+  latestMoviesList.innerHTML = '<p>Loading...</p>';
+  pageIndicator.textContent = `Loading...`;
+
+  if (movieCache.has(cacheKey)) {
+    const cached = movieCache.get(cacheKey);
+    displayLatestMovies(cached.results);
+    currentPage = cached.page;
+    totalPages = cached.totalPages;
+    updatePaginationButtons();
+    return;
+  }
 
   let url = `${BASE_URL}/discover/movie?api_key=${API_KEY}&page=${page}`;
-
-  if (genre) {
-    url += `&with_genres=${genre}`;
-  }
-  if (year) {
-    url += `&primary_release_year=${year}`;
-  }
+  if (genre) url += `&with_genres=${genre}`;
+  if (year) url += `&primary_release_year=${year}`;
 
   try {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
+
+    movieCache.set(cacheKey, { results: data.results || [], page, totalPages: Math.min(100, data.total_pages) });
 
     currentPage = page;
     totalPages = data.total_pages > 100 ? 100 : data.total_pages;
@@ -76,13 +89,19 @@ async function fetchFilteredMovies(page = 1) {
 function displayLatestMovies(movies) {
   latestMoviesList.innerHTML = '';
 
+  if (movies.length === 0) {
+    latestMoviesList.textContent = 'No movies found.';
+    return;
+  }
+
   movies.forEach(movie => {
     const img = document.createElement('img');
-    img.src = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '';
+    img.src = movie.poster_path ? `https://image.tmdb.org/t/p/w342${movie.poster_path}` : '';
     img.alt = movie.title || movie.name || 'No title';
     img.title = movie.title || movie.name || '';
     img.loading = 'lazy';
     img.style.cursor = 'pointer';
+    img.style.minHeight = '250px';
 
     img.onclick = () => showDetails({
       ...movie,
