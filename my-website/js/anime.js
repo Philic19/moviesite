@@ -193,3 +193,122 @@ function populateYearDropdown() {
 
 populateYearDropdown();
 resetAnime();
+
+
+/* ========== SEARCH BAR FUNCTIONALITY ========== */
+
+const searchModal = document.getElementById('search-modal');
+const searchInputNavbar = document.getElementById('search-input-navbar');
+const searchInput = document.getElementById('search-input');
+const searchResults = document.getElementById('search-results');
+const searchCloseBtn = document.getElementById('search-close-btn');
+
+// Open search modal when navbar search bar clicked
+searchInputNavbar.addEventListener('click', () => {
+  searchModal.style.display = 'block';
+  searchInputNavbar.blur(); // remove focus styling
+  searchInput.value = '';
+  searchResults.innerHTML = '';
+  searchInput.focus();
+});
+
+// Close search modal
+searchCloseBtn.addEventListener('click', () => {
+  searchModal.style.display = 'none';
+  searchResults.innerHTML = '';
+});
+
+// Close search modal on Escape key (add to existing handler)
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && searchModal.style.display === 'block') {
+    searchModal.style.display = 'none';
+    searchResults.innerHTML = '';
+  }
+});
+
+// Debounce helper for search input to avoid too many API calls
+function debounce(func, delay = 300) {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), delay);
+  };
+}
+
+// Search TMDB API
+async function performSearch(query) {
+  if (!query) {
+    searchResults.innerHTML = '';
+    return;
+  }
+  
+  const url = `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=false&page=1`;
+  
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const data = await res.json();
+
+    displaySearchResults(data.results || []);
+  } catch (err) {
+    console.error('Search error:', err);
+    searchResults.innerHTML = '<p style="color: white;">Error searching, please try again.</p>';
+  }
+}
+
+// Display results in search modal
+function displaySearchResults(results) {
+  if (!results.length) {
+    searchResults.innerHTML = '<p style="color: white;">No results found.</p>';
+    return;
+  }
+
+  searchResults.innerHTML = '';
+  const fragment = document.createDocumentFragment();
+
+  results.forEach(item => {
+    // Only show movies and TV shows
+    if (!['movie', 'tv'].includes(item.media_type)) return;
+
+    const div = document.createElement('div');
+    div.style.cursor = 'pointer';
+    div.style.width = '150px';
+    div.style.color = 'white';
+    div.style.textAlign = 'center';
+
+    const img = document.createElement('img');
+    img.src = item.poster_path ? `https://image.tmdb.org/t/p/w185${item.poster_path}` : '';
+    img.alt = item.name || item.title || 'No title';
+    img.style.width = '100%';
+    img.style.borderRadius = '8px';
+
+    const title = document.createElement('p');
+    title.textContent = item.name || item.title || 'No title';
+    title.style.fontSize = '14px';
+    title.style.marginTop = '5px';
+    title.style.whiteSpace = 'nowrap';
+    title.style.overflow = 'hidden';
+    title.style.textOverflow = 'ellipsis';
+
+    div.appendChild(img);
+    div.appendChild(title);
+
+    div.onclick = () => {
+      showDetails({
+        ...item,
+        name: item.name || item.title,
+        media_type: item.media_type || 'movie',
+      });
+      searchModal.style.display = 'none';
+    };
+
+    fragment.appendChild(div);
+  });
+
+  searchResults.appendChild(fragment);
+}
+
+// Listen to input changes with debounce
+searchInput.addEventListener('input', debounce((e) => {
+  performSearch(e.target.value.trim());
+}, 400));
