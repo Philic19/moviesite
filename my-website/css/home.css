@@ -154,6 +154,9 @@ body.light-mode .modal-content {
   flex-wrap: wrap;         /* allows items to wrap to next line */
   gap: 12px;               /* space between items */
   justify-content: center; /* center the grid horizontally */
+  max-height:none;
+  height:auto;
+  overflow-y:visible;
 }
 
 .anime-list img {
