@@ -188,14 +188,45 @@ async function init() {
     fetchGenres('tv')
   ]);
 
-  populateGenreFilter('genre-filter-movie', movieGenres);
-  populateGenreFilter('genre-filter-tv', tvGenres);
-  populateGenreFilter('genre-filter-anime', tvGenres);
+  // Merge and deduplicate genres
+  const genreMap = new Map();
+  [...movieGenres, ...tvGenres].forEach(g => {
+    genreMap.set(g.id, g.name);
+  });
 
-  addGenreFilterListener('genre-filter-movie', 'movies', 'movies-list');
-  addGenreFilterListener('genre-filter-tv', 'tvShows', 'tvshows-list');
-  addGenreFilterListener('genre-filter-anime', 'anime', 'anime-list');
+  // Populate unified genre filter
+  const select = document.getElementById('genre-filter');
+  if (select) {
+    // Add "All" option
+    const allOption = document.createElement('option');
+    allOption.value = 'all';
+    allOption.textContent = 'All Genres';
+    select.appendChild(allOption);
+
+    for (const [id, name] of genreMap.entries()) {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = name;
+      select.appendChild(option);
+    }
+
+    // Add event listener
+    select.addEventListener('change', () => {
+      const selected = select.value;
+      const genreId = selected === 'all' ? null : parseInt(selected);
+
+      const filterByGenre = (list) => {
+        if (!genreId) return list;
+        return list.filter(item => item.genre_ids.includes(genreId));
+      };
+
+      displayList(filterByGenre(currentItems.movies), 'movies-list');
+      displayList(filterByGenre(currentItems.tvShows), 'tvshows-list');
+      displayList(filterByGenre(currentItems.anime), 'anime-list');
+    });
+  }
 }
+
 
 window.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
