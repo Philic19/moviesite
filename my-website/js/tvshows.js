@@ -11,7 +11,7 @@ const prevBtn = document.getElementById('latest-prev-btn');
 const nextBtn = document.getElementById('latest-next-btn');
 const pageIndicator = document.getElementById('latest-page-indicator');
 
-const mediaType = 'tv'; // 🔁 CHANGED from 'movie' to 'tv'
+const mediaType = 'tvShows'; // 🔁 CHANGED from 'movie' to 'tv'
 
 async function fetchLatestMovies(page = 1) {
   try {
