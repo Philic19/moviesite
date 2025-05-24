@@ -34,7 +34,7 @@ async function fetchNextPage() {
     return;
   }
 
-  let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_original_language=ja&sort_by=popularity.desc`;
+let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_original_language=ja&with_genres=16&sort_by=popularity.desc`;
 
   if (year) {
     url += `&first_air_date_year=${year}`;
