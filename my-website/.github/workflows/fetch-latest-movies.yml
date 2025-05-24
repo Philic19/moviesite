@@ -1,26 +1,37 @@
-# .github/workflows/fetch-movies.yml
-name: Fetch Latest Movies JSON
+name: Fetch Latest Movies
 
 on:
   push:
     branches: [main]
-  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *' # every day at midnight UTC
 
 jobs:
-  fetch-movies:
+  fetch-latest:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: '18'
-      - run: npm install node-fetch@2
-      - run: node scripts/fetch-latest-movies.js
-        env:
-          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
-      - run: |
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install node-fetch
+
+      - name: Fetch and save latest movies
+        run: |
+          mkdir -p data
+          node fetch-latest.js
+
+      - name: Commit and push changes
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/
-          git commit -m "Update latest movies data"
+          git add data/latest.json
+          git commit -m "Update latest movies data" || echo "No changes to commit"
           git push
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
