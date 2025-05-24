@@ -1,29 +1,26 @@
+# .github/workflows/fetch-movies.yml
+name: Fetch Latest Movies JSON
 
-const fetch = require('node-fetch');
-const fs = require('fs');
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
 
-const API_KEY = process.env.TMDB_API_KEY;
-const BASE_URL = 'https://api.themoviedb.org/3/movie/now_playing';
-
-async function fetchPage(page) {
-  const res = await fetch(`${BASE_URL}?api_key=${API_KEY}&language=en-US&page=${page}`);
-  if (!res.ok) throw new Error(`Failed to fetch page ${page}`);
-  return res.json();
-}
-
-(async () => {
-  try {
-    // Fetch first page to get total_pages
-    const firstPageData = await fetchPage(1);
-    const totalPages = firstPageData.total_pages;
-
-
-    fs.writeFileSync('data/latest-movies-page-1.json', JSON.stringify(firstPageData.results, null, 2));
-
-
-    console.log('Fetched and saved latest movies JSON files.');
-  } catch (e) {
-    console.error(e);
-    process.exit(1);
-  }
-})();
+jobs:
+  fetch-movies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm install node-fetch@2
+      - run: node scripts/fetch-latest-movies.js
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git commit -m "Update latest movies data"
+          git push
