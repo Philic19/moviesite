@@ -1,6 +1,9 @@
+<script>
 const API_KEY = '277256e815b05aae4f56dd5dd45eaa97';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/original';
+const mediaType = 'tv';
+const ANIME_KEYWORD = 210024;
 
 let currentItem = null;
 let currentPage = 1;
@@ -9,125 +12,13 @@ let isLoading = false;
 
 const latestMoviesList = document.getElementById('latest-movies-list');
 const pageIndicator = document.getElementById('latest-page-indicator');
-
 const genreSelect = document.getElementById('genre-select');
 const yearSelect = document.getElementById('year-select');
-
-const mediaType = 'tv'; // Anime are TV shows
-
 const movieCache = new Map();
-
-// Search modal elements
-const searchModal = document.getElementById('search-modal');
-const navbarSearchInput = document.getElementById('search-input-navbar');
-const searchInput = document.getElementById('search-input');
-const searchResults = document.getElementById('search-results');
-const searchCloseBtn = document.getElementById('search-close-btn');
-
-// Open search modal
-navbarSearchInput.addEventListener('click', () => {
-  searchModal.style.display = 'block';
-  searchInput.value = '';
-  searchResults.innerHTML = '';
-  searchInput.focus();
-});
-
-// Close search modal
-searchCloseBtn.addEventListener('click', () => {
-  searchModal.style.display = 'none';
-  searchInput.value = '';
-  searchResults.innerHTML = '';
-});
-searchModal.addEventListener('click', e => {
-  if (e.target === searchModal) {
-    searchModal.style.display = 'none';
-    searchInput.value = '';
-    searchResults.innerHTML = '';
-  }
-});
-
-// Search with debounce
-let searchTimeout = null;
-searchInput.addEventListener('input', () => {
-  clearTimeout(searchTimeout);
-  const query = searchInput.value.trim();
-  if (!query) {
-    searchResults.innerHTML = '';
-    return;
-  }
-
-  searchTimeout = setTimeout(() => {
-    searchTMDB(query);
-  }, 400);
-});
-
-async function searchTMDB(query) {
-  searchResults.innerHTML = '<p style="color:#fff;">Searching...</p>';
-
-  try {
-    const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&page=1`);
-    if (!res.ok) throw new Error(`Error: ${res.status}`);
-    const data = await res.json();
-
-    if (!data.results || data.results.length === 0) {
-      searchResults.innerHTML = '<p style="color:#fff;">No results found.</p>';
-      return;
-    }
-
-    renderSearchResults(data.results);
-  } catch (err) {
-    console.error('Search error:', err);
-    searchResults.innerHTML = '<p style="color:#f00;">Search failed. Try again.</p>';
-  }
-}
-
-function renderSearchResults(results) {
-  searchResults.innerHTML = '';
-  results.forEach(item => {
-    if (!item.title && !item.name) return;
-
-    const div = document.createElement('div');
-    div.style.cursor = 'pointer';
-    div.style.width = '150px';
-    div.style.color = '#fff';
-    div.style.textAlign = 'center';
-
-    const img = document.createElement('img');
-    img.src = item.poster_path ? `https://image.tmdb.org/t/p/w154${item.poster_path}` : '';
-    img.alt = item.name || item.title;
-    img.loading = 'lazy';
-    img.style.width = '100%';
-    img.style.borderRadius = '8px';
-    img.style.marginBottom = '5px';
-
-    const title = document.createElement('div');
-    title.textContent = item.name || item.title || 'No title';
-    title.style.fontSize = '14px';
-    title.style.overflow = 'hidden';
-    title.style.textOverflow = 'ellipsis';
-    title.style.whiteSpace = 'nowrap';
-
-    div.appendChild(img);
-    div.appendChild(title);
-
-    div.onclick = () => {
-      showDetails({
-        ...item,
-        media_type: 'tv'
-      });
-      searchModal.style.display = 'none';
-      searchInput.value = '';
-      searchResults.innerHTML = '';
-    };
-
-    searchResults.appendChild(div);
-  });
-}
 
 async function fetchGenres() {
   try {
     const res = await fetch(`${BASE_URL}/genre/tv/list?api_key=${API_KEY}`);
-    if (!res.ok) throw new Error('Failed to fetch genres');
     const data = await res.json();
     data.genres.forEach(genre => {
       const option = document.createElement('option');
@@ -170,14 +61,123 @@ async function fetchNextPage() {
     return;
   }
 
-  let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}`;
+  let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_keywords=${ANIME_KEYWORD}`;
   if (genre) url += `&with_genres=${genre}`;
   if (year) url += `&first_air_date_year=${year}`;
 
   try {
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
+    console.log("Fetched Anime:", data.results);
 
     totalPages = data.total_pages;
-    movieCache.set(cacheKey, { results: data.results || [], page: currentPage
+    movieCache.set(cacheKey, { results: data.results || [], page: currentPage, totalPages });
+    appendMovies(data.results || []);
+    currentPage++;
+    pageIndicator.textContent = `Page ${currentPage - 1}`;
+  } catch (error) {
+    console.error("Error fetching anime:", error);
+  } finally {
+    isLoading = false;
+  }
+}
+
+function appendMovies(movies) {
+  if (!movies.length) {
+    const endMsg = document.createElement('p');
+    endMsg.textContent = 'No more anime found.';
+    latestMoviesList.appendChild(endMsg);
+    return;
+  }
+
+  movies.forEach(movie => {
+    const img = document.createElement('img');
+    img.src = movie.poster_path ? `https://image.tmdb.org/t/p/w342${movie.poster_path}` : '';
+    img.alt = movie.name || 'No title';
+    img.title = movie.name || '';
+    img.loading = 'lazy';
+    img.style.cursor = 'pointer';
+    img.style.minHeight = '250px';
+
+    img.onclick = () => showDetails({
+      ...movie,
+      media_type: mediaType
+    });
+
+    latestMoviesList.appendChild(img);
+  });
+}
+
+function resetMovies() {
+  latestMoviesList.innerHTML = '';
+  currentPage = 1;
+  totalPages = Infinity;
+  movieCache.clear();
+  fetchNextPage();
+}
+
+function showDetails(item) {
+  currentItem = item;
+
+  document.getElementById('modal-title').textContent = item.name || item.title || 'No title';
+  document.getElementById('modal-description').textContent = item.overview || 'No description.';
+  document.getElementById('modal-image').src = item.poster_path ? `${IMG_URL}${item.poster_path}` : '';
+  document.getElementById('modal-rating').innerHTML = getStars(item.vote_average || 0);
+
+  const serverSelect = document.getElementById('server');
+  if (serverSelect) {
+    serverSelect.value = 'vidsrc.cc';
+    serverSelect.onchange = changeServer;
+  }
+
+  document.getElementById('modal').style.display = 'flex';
+  changeServer();
+}
+
+function changeServer() {
+  if (!currentItem) return;
+  const server = document.getElementById('server').value;
+  const embedURL = server === "vidsrc.cc"
+    ? `https://vidsrc.cc/v2/embed/tv/${currentItem.id}`
+    : server === "vidsrc.me"
+    ? `https://vidsrc.net/embed/tv/?tmdb=${currentItem.id}`
+    : `https://player.videasy.net/tv/${currentItem.id}`;
+
+  const videoFrame = document.getElementById('modal-video');
+  if (videoFrame) videoFrame.src = embedURL;
+}
+
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+  const videoFrame = document.getElementById('modal-video');
+  if (videoFrame) videoFrame.src = '';
+}
+
+function getStars(vote) {
+  const full = Math.floor(vote / 2);
+  const half = vote % 2 >= 1 ? 1 : 0;
+  return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - half);
+}
+
+window.addEventListener('scroll', () => {
+  const scrollThreshold = 300;
+  if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - scrollThreshold)) {
+    fetchNextPage();
+  }
+});
+
+genreSelect.addEventListener('change', resetMovies);
+yearSelect.addEventListener('change', resetMovies);
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeModal();
+});
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// Initial Load
+fetchGenres();
+populateYearDropdown();
+resetMovies();
+</script>
