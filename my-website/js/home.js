@@ -122,24 +122,28 @@ function changeServer() {
   const server = document.getElementById('server').value;
   const type = currentItem.media_type === "movie" ? "movie" : "tv";
   let embedURL = "";
+
   if (server === "vidsrc.cc") {
     embedURL = `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
   } else if (server === "vidsrc.me") {
     embedURL = `https://vidsrc.net/embed/${type}/?tmdb=${currentItem.id}`;
-    else if (server === "vidsrc.to") {
-    embedURL = `https://vidsrc.icu/embed/${type}/?tmdb=${currentItem.id}`;
-    else if (server === "vidsrc.icu") {
+  } else if (server === "vidsrc.to") {
     embedURL = `https://vidsrc.to/embed/${type}/?tmdb=${currentItem.id}`;
-    else if (server === "vidlink.pro") {
+  } else if (server === "vidsrc.icu") {
+    embedURL = `https://vidsrc.icu/embed/${type}/?tmdb=${currentItem.id}`;
+  } else if (server === "vidlink.pro") {
     embedURL = `https://vidlink.pro/embed/${type}/?tmdb=${currentItem.id}`;
-    else if (server === "embed.su") {
+  } else if (server === "embed.su") {
     embedURL = `https://embed.su/embed/${type}/?tmdb=${currentItem.id}`;
-    else if (server === "autoembed.cc") {
+  } else if (server === "autoembed.cc") {
     embedURL = `https://autoembed.cc/embed/${type}/?tmdb=${currentItem.id}`;
   } else if (server === "player.videasy.net") {
     embedURL = `https://player.videasy.net/${type}/${currentItem.id}`;
   }
+
   document.getElementById('modal-video').src = embedURL;
+}
+
 }
 function closeModal() {
   document.getElementById('modal').style.display = 'none';
