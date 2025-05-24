@@ -1,32 +1,27 @@
 const API_KEY = '277256e815b05aae4f56dd5dd45eaa97';
 const BASE_URL = 'https://api.themoviedb.org/3';
-const IMG_URL = 'https://image.tmdb.org/t/p/w154';
+const IMG_URL = 'https://image.tmdb.org/t/p/original';
 let currentItems = {
   movies: [],
   tvShows: [],
   anime: []
 };
-let currentItem = null;
-const ITEMS_PER_BATCH = 20;
-let renderedIndexes = {
-  movies: 0,
-  tvShows: 0,
-  anime: 0,
-};
+
 async function fetchTrending(type, page = 1) {
   try {
     const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}&page=${page}`);
     const data = await res.json();
-    return data.results || [];
+    return data.results;
   } catch (error) {
     console.error("Error Fetching Trending:", error);
     return [];
   }
 }
+
 async function fetchTrendingAnime() {
   let allResults = [];
   try {
-    for (let page = 1; page <= 1; page++) {
+    for (let page = 1; page <= 3; page++) {
       const res = await fetch(`${BASE_URL}/trending/tv/week?api_key=${API_KEY}&page=${page}`);
       const data = await res.json();
       const filtered = data.results.filter(item =>
@@ -39,75 +34,42 @@ async function fetchTrendingAnime() {
   }
   return allResults;
 }
+
 async function fetchGenres(type = 'movie') {
   try {
     const res = await fetch(`${BASE_URL}/genre/${type}/list?api_key=${API_KEY}`);
     const data = await res.json();
-    return data.genres || [];
+    return data.genres;
   } catch (error) {
     console.error("Error fetching genres:", error);
     return [];
   }
 }
+
 function displayBanner(item) {
-  const banner = document.getElementById('banner');
-  if (!banner) return;
-  banner.style.backgroundImage = `url(${IMG_URL}${item.backdrop_path})`;
-  const title = document.getElementById('banner-title');
-  if (title) title.textContent = item.title || item.name;
+  document.getElementById('banner').style.backgroundImage = `url(${IMG_URL}${item.backdrop_path})`;
+  document.getElementById('banner-title').textContent = item.title || item.name;
 }
-// This function appends a batch of items starting from startIndex
-function displayListBatch(items, containerId, startIndex) {
+
+function displayList(items, containerId) {
   const container = document.getElementById(containerId);
-  if (!container) return;
-  const endIndex = Math.min(startIndex + ITEMS_PER_BATCH, items.length);
-  for (let i = startIndex; i < endIndex; i++) {
-    const item = items[i];
-    if (!item.poster_path) continue;
+  container.innerHTML = '';
+  items.forEach(item => {
     const img = document.createElement('img');
     img.src = `${IMG_URL}${item.poster_path}`;
     img.alt = item.title || item.name || 'Media Thumbnail';
-    img.loading = 'lazy';
     img.onclick = () => showDetails(item);
+    img.loading = 'lazy';
     container.appendChild(img);
-  }
-  return endIndex;
-}
-// Setup IntersectionObserver to load more items on scroll
-function setupLazyLoading(itemsKey, containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  // Sentinel element to detect scroll near bottom
-  let sentinel = document.createElement('div');
-  sentinel.style.height = '1px';
-  container.appendChild(sentinel);
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const items = currentItems[itemsKey];
-        if (!items) return;
-        const nextIndex = renderedIndexes[itemsKey];
-        if (nextIndex >= items.length) {
-          observer.disconnect();
-          sentinel.remove();
-          return;
-        }
-        const newIndex = displayListBatch(items, containerId, nextIndex);
-        renderedIndexes[itemsKey] = newIndex;
-      }
-    });
-  }, {
-    root: container,
-    rootMargin: '0px',
-    threshold: 1.0
   });
-  observer.observe(sentinel);
 }
+
 function getStars(vote) {
   const full = Math.floor(vote / 2);
   const half = vote % 2 >= 1 ? 1 : 0;
   return '★'.repeat(full) + (half ? '⯨' : '') + '☆'.repeat(5 - full - half);
 }
+
 function showDetails(item) {
   currentItem = item;
   localStorage.setItem('lastItem', JSON.stringify(item));
@@ -118,51 +80,49 @@ function showDetails(item) {
   changeServer();
   document.getElementById('modal').style.display = 'flex';
 }
-function changeServer(server) {
-  const type = currentItem.media_type || (currentItem.title ? "movie" : "tv");
-  const embedMap = {
-    "vidsrc.cc": `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`,
-    "vidsrc.me": `https://vidsrc.net/embed/${type}/?tmdb=${currentItem.id}`,
-    "vidsrc.to": `https://vidsrc.icu/embed/${type}/?tmdb=${currentItem.id}`,
-    "vidsrc.icu": `https://vidsrc.to/embed/${type}/?tmdb=${currentItem.id}`,
-    "vidsrc.stream": `https://vidsrc.stream/embed/${type}/${currentItem.id}`,
-    "vidsrc.xyz": `https://vidsrc.xyz/embed/${type}/${currentItem.id}`
-  };
 
-  embedURL = embedMap[server] || "";
-  renderModal(currentItem);
-}
-function renderModal(item, embedURL) {
-  const iframe = document.getElementById('modal-video');
-  if (iframe && embedURL) {
-    iframe.src = embedURL;
+function changeServer() {
+  const server = document.getElementById('server').value;
+  const type = currentItem.media_type === "movie" ? "movie" : "tv";
+  let embedURL = "";
+
+  if (server === "vidsrc.cc") {
+    embedURL = `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
+  } else if (server === "vidsrc.me") {
+    embedURL = `https://vidsrc.net/embed/${type}/?tmdb=${currentItem.id}`;
+  } else if (server === "player.videasy.net") {
+    embedURL = `https://player.videasy.net/${type}/${currentItem.id}`;
   }
+
+  document.getElementById('modal-video').src = embedURL;
 }
 
-
-
-}
 function closeModal() {
   document.getElementById('modal').style.display = 'none';
   document.getElementById('modal-video').src = '';
 }
+
 function openSearchModal() {
   document.getElementById('search-modal').style.display = 'flex';
   document.getElementById('search-input').focus();
 }
+
 function closeSearchModal() {
   document.getElementById('search-modal').style.display = 'none';
   document.getElementById('search-results').innerHTML = '';
 }
+
 async function searchTMDB() {
   const query = document.getElementById('search-input').value.trim();
   if (!query) {
     document.getElementById('search-results').innerHTML = '';
     return;
   }
+
   try {
     const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${query}`);
     const data = await res.json();
+
     const container = document.getElementById('search-results');
     container.innerHTML = '';
     data.results.forEach(item => {
@@ -181,6 +141,7 @@ async function searchTMDB() {
     console.error("Search failed:", error);
   }
 }
+
 function populateGenreFilter(selectId, genres) {
   const select = document.getElementById(selectId);
   if (!select) return;
@@ -191,179 +152,143 @@ function populateGenreFilter(selectId, genres) {
     select.appendChild(option);
   });
 }
+
 function addGenreFilterListener(selectId, itemsKey, containerId) {
   const select = document.getElementById(selectId);
   if (!select) return;
   select.addEventListener('change', function () {
     const selectedGenre = parseInt(this.value);
     if (isNaN(selectedGenre)) {
-      // Reset list and rendered index
-      renderedIndexes[itemsKey] = 0;
-      document.getElementById(containerId).innerHTML = '';
-      renderedIndexes[itemsKey] = displayListBatch(currentItems[itemsKey], containerId, 0);
-      setupLazyLoading(itemsKey, containerId); // re-setup lazy loading
+      displayList(currentItems[itemsKey], containerId);
     } else {
-      // Filtered list
       const filtered = currentItems[itemsKey].filter(item =>
         item.genre_ids.includes(selectedGenre)
       );
-      // Reset rendered index
-      renderedIndexes[itemsKey] = 0;
-      const container = document.getElementById(containerId);
-      if (!container) return;
-      container.innerHTML = '';
-      renderedIndexes[itemsKey] = displayListBatch(filtered, containerId, 0);
-      // We need to disconnect old observer and setup new one on filtered list:
-      // For simplicity, we won't implement dynamic lazy loading on filtered lists here,
-      // but you can extend it if needed.
+      displayList(filtered, containerId);
     }
   });
 }
+
 async function init() {
   const movies = await fetchTrending('movie');
   const tvShows = await fetchTrending('tv');
   const anime = await fetchTrendingAnime();
+
   currentItems.movies = movies;
   currentItems.tvShows = tvShows;
   currentItems.anime = anime;
+
   displayBanner(movies[Math.floor(Math.random() * movies.length)]);
-  // Reset indexes and clear containers
-  renderedIndexes = { movies: 0, tvShows: 0, anime: 0 };
-  ['movies-list', 'tvshows-list', 'anime-list'].forEach(id => {
-    const c = document.getElementById(id);
-    if (c) c.innerHTML = '';
-  });
-  // Display initial batch
-  renderedIndexes.movies = displayListBatch(movies, 'movies-list', 0);
-  renderedIndexes.tvShows = displayListBatch(tvShows, 'tvshows-list', 0);
-  renderedIndexes.anime = displayListBatch(anime, 'anime-list', 0);
-  // Setup lazy loading for each list
-  setupLazyLoading('movies', 'movies-list');
-  setupLazyLoading('tvShows', 'tvshows-list');
-  setupLazyLoading('anime', 'anime-list');
+  displayList(movies, 'movies-list');
+  displayList(tvShows, 'tvshows-list');
+  displayList(anime, 'anime-list');
+
   const [movieGenres, tvGenres] = await Promise.all([
     fetchGenres('movie'),
     fetchGenres('tv')
   ]);
+
+  // Merge and deduplicate genres
   const genreMap = new Map();
-  [...movieGenres, ...tvGenres].forEach(g => genreMap.set(g.id, g.name));
+  [...movieGenres, ...tvGenres].forEach(g => {
+    genreMap.set(g.id, g.name);
+  });
+
+  // Populate unified genre filter
   const select = document.getElementById('genre-filter');
   if (select) {
+    // Add "All" option
     const allOption = document.createElement('option');
     allOption.value = 'all';
     allOption.textContent = 'All Genres';
     select.appendChild(allOption);
+
     for (const [id, name] of genreMap.entries()) {
       const option = document.createElement('option');
       option.value = id;
       option.textContent = name;
       select.appendChild(option);
     }
+
+    // Add event listener
     select.addEventListener('change', () => {
       const selected = select.value;
       const genreId = selected === 'all' ? null : parseInt(selected);
+
       const filterByGenre = (list) => {
         if (!genreId) return list;
         return list.filter(item => item.genre_ids.includes(genreId));
       };
-      // Reset containers and indexes, then lazy load filtered lists
-      ['movies', 'tvShows', 'anime'].forEach(key => {
-        const containerId = key === 'movies' ? 'movies-list' : key === 'tvShows' ? 'tvshows-list' : 'anime-list';
-        const filteredList = filterByGenre(currentItems[key]);
-        renderedIndexes[key] = 0;
-        const container = document.getElementById(containerId);
-        if (container) container.innerHTML = '';
-        renderedIndexes[key] = displayListBatch(filteredList, containerId, 0);
-        setupLazyLoadingFiltered(filteredList, key, containerId);
-      });
+
+      displayList(filterByGenre(currentItems.movies), 'movies-list');
+      displayList(filterByGenre(currentItems.tvShows), 'tvshows-list');
+      displayList(filterByGenre(currentItems.anime), 'anime-list');
     });
   }
 }
-function setupLazyLoadingFiltered(items, itemsKey, containerId) {
-  // Similar to setupLazyLoading but for filtered lists passed as argument
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  let sentinel = document.createElement('div');
-  sentinel.style.height = '1px';
-  container.appendChild(sentinel);
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const nextIndex = renderedIndexes[itemsKey];
-        if (nextIndex >= items.length) {
-          observer.disconnect();
-          sentinel.remove();
-          return;
-        }
-        const newIndex = displayListBatch(items, containerId, nextIndex);
-        renderedIndexes[itemsKey] = newIndex;
-      }
-    });
-  }, {
-    root: container,
-    rootMargin: '0px',
-    threshold: 1.0
-  });
-  observer.observe(sentinel);
+
+
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeModal();
+});
+
+let debounceTimeout;
+document.getElementById('search-input').addEventListener('input', () => {
+  clearTimeout(debounceTimeout);
+  debounceTimeout = setTimeout(searchTMDB, 400);
+});
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  document.body.classList.toggle('light-mode');
+});
+
+function openDisclaimerModal() {
+  document.getElementById('disclaimer-modal').style.display = 'flex';
 }
+
+function closeDisclaimerModal() {
+  document.getElementById('disclaimer-modal').style.display = 'none';
+}
+
+window.addEventListener('click', function(e) {
+  const modal = document.getElementById('disclaimer-modal');
+  if (e.target === modal) {
+    modal.style.display = 'none';
+  }
+});
+
 let currentBannerIndex = 0;
+
 function displayBannerFromList(index) {
   const movie = currentItems.movies[index];
   if (!movie) return;
   displayBanner(movie);
-  document.getElementById('banner').onclick = () => showDetails(movie);
+
+  document.getElementById('banner').onclick = () => {
+    showDetails(movie);
+  };
 }
-document.getElementById('banner-prev')?.addEventListener('click', (e) => {
+
+document.getElementById('banner-prev').addEventListener('click', (e) => {
   e.stopPropagation();
   currentBannerIndex = (currentBannerIndex - 1 + currentItems.movies.length) % currentItems.movies.length;
   displayBannerFromList(currentBannerIndex);
 });
-document.getElementById('banner-next')?.addEventListener('click', (e) => {
+
+document.getElementById('banner-next').addEventListener('click', (e) => {
   e.stopPropagation();
   currentBannerIndex = (currentBannerIndex + 1) % currentItems.movies.length;
   displayBannerFromList(currentBannerIndex);
 });
-// Modals
-window.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    closeModal();
-    document.getElementById('about-modal')?.style.display === 'flex' && (document.getElementById('about-modal').style.display = 'none');
-  }
-});
-document.getElementById('modal')?.addEventListener('click', e => {
-  if (e.target.id === 'modal') closeModal();
-});
-document.getElementById('theme-toggle')?.addEventListener('click', () => {
-  document.body.classList.toggle('light-mode');
-});
-document.getElementById('search-input')?.addEventListener('input', () => {
-  clearTimeout(debounceTimeout);
-  debounceTimeout = setTimeout(searchTMDB, 400);
-});
-let debounceTimeout;
-// About modal
-const aboutModal = document.getElementById('about-modal');
-const openAboutBtn = document.getElementById('open-about-btn');
-const closeAboutBtn = document.getElementById('close-about-btn');
-if (aboutModal && openAboutBtn && closeAboutBtn) {
-  openAboutBtn.addEventListener('click', e => {
-    e.preventDefault();
-    aboutModal.style.display = 'flex';
-  });
-  closeAboutBtn.addEventListener('click', () => aboutModal.style.display = 'none');
-  aboutModal.addEventListener('click', e => {
-    if (e.target === aboutModal) aboutModal.style.display = 'none';
-  });
-}
-function openDisclaimerModal() {
-  document.getElementById('disclaimer-modal').style.display = 'flex';
-}
-function closeDisclaimerModal() {
-  document.getElementById('disclaimer-modal').style.display = 'none';
-}
+
 async function startApp() {
   await init();
   currentBannerIndex = Math.floor(Math.random() * currentItems.movies.length);
   displayBannerFromList(currentBannerIndex);
 }
+
 startApp();
