@@ -3,14 +3,24 @@ const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/original';
 
 let currentItem = null;
+let currentPage = 1;
+let totalPages = 1;
 
 const latestMoviesList = document.getElementById('latest-movies-list');
+const prevBtn = document.getElementById('latest-prev-btn');
+const nextBtn = document.getElementById('latest-next-btn');
+const pageIndicator = document.getElementById('latest-page-indicator');
 
 async function fetchLatestMovies(page = 1) {
   try {
     const res = await fetch(`${BASE_URL}/movie/now_playing?api_key=${API_KEY}&language=en-US&page=${page}`);
     const data = await res.json();
+
+    currentPage = page;
+    totalPages = data.total_pages;
+
     displayLatestMovies(data.results || []);
+    updatePaginationButtons();
   } catch (error) {
     console.error('Error fetching latest movies:', error);
   }
@@ -29,14 +39,19 @@ function displayLatestMovies(movies) {
 
     img.onclick = () => showDetails({
       ...movie,
-      media_type: 'movie' // add media_type for video embed URL
+      media_type: 'movie' // Needed for video embed URLs
     });
 
     latestMoviesList.appendChild(img);
   });
 }
 
-// Modal functions and helpers:
+function updatePaginationButtons() {
+  pageIndicator.textContent = `Page ${currentPage}`;
+
+  prevBtn.disabled = currentPage <= 1;
+  nextBtn.disabled = currentPage >= totalPages;
+}
 
 function showDetails(item) {
   currentItem = item;
@@ -46,7 +61,6 @@ function showDetails(item) {
   document.getElementById('modal-image').src = item.poster_path ? `${IMG_URL}${item.poster_path}` : '';
   document.getElementById('modal-rating').innerHTML = getStars(item.vote_average || 0);
 
-  // Default server selector setup
   const serverSelect = document.getElementById('server');
   if (serverSelect) {
     serverSelect.value = 'vidsrc.cc'; // default server
@@ -90,7 +104,19 @@ function getStars(vote) {
   return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - half);
 }
 
-// Event listeners for closing modal
+// Event listeners
+prevBtn.addEventListener('click', () => {
+  if (currentPage > 1) {
+    fetchLatestMovies(currentPage - 1);
+  }
+});
+
+nextBtn.addEventListener('click', () => {
+  if (currentPage < totalPages) {
+    fetchLatestMovies(currentPage + 1);
+  }
+});
+
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal').addEventListener('click', e => {
   if (e.target.id === 'modal') closeModal();
@@ -99,5 +125,5 @@ window.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
 });
 
-// Kick off initial fetch
+// Initial fetch
 fetchLatestMovies();
