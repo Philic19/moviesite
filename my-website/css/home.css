@@ -151,11 +151,25 @@ body.light-mode .modal-content {
 
 .anime-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  justify-content: center;
-  padding: 20px;
+  flex-wrap: wrap;         /* allows items to wrap to next line */
+  gap: 12px;               /* space between items */
+  justify-content: center; /* center the grid horizontally */
 }
+
+.anime-list img {
+  flex: 0 1 150px;         /* each image tries to be 150px wide but can shrink */
+  height: 225px;           /* fixed height to keep uniform */
+  object-fit: cover;       /* crop image nicely */
+  border-radius: 8px;      /* optional rounded corners */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3); /* optional subtle shadow */
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.anime-list img:hover {
+  transform: scale(1.05);  /* subtle zoom on hover */
+}
+
 
 
     .modal {
