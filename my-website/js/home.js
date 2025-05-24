@@ -60,6 +60,7 @@ function displayList(items, containerId) {
     img.src = `${IMG_URL}${item.poster_path}`;
     img.alt = item.title || item.name || 'Media Thumbnail';
     img.onclick = () => showDetails(item);
+    img.loading = 'lazy';
     container.appendChild(img);
   });
 }
@@ -130,6 +131,7 @@ async function searchTMDB() {
       const img = document.createElement('img');
       img.src = `${IMG_URL}${item.poster_path}`;
       img.alt = item.title || item.name || 'Media Thumbnail';
+      img.loading = 'lazy';
       img.onclick = () => {
         closeSearchModal();
         showDetails(item);
