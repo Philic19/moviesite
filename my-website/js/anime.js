@@ -1,4 +1,4 @@
-const API_KEY = "your_api_key_here";
+const API_KEY = "277256e815b05aae4f56dd5dd45eaa97";
 const BASE_URL = "https://api.themoviedb.org/3";
 const mediaType = "tv"; // 'tv' for anime shows
 
