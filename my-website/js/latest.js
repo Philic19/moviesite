@@ -13,16 +13,18 @@ const pageIndicator = document.getElementById('latest-page-indicator');
 
 async function fetchLatestMovies(page = 1) {
   try {
-    const res = await fetch(`${BASE_URL}/movie/now_playing?api_key=${API_KEY}&language=en-US&page=${page}`);
-    const data = await res.json();
+    // Assuming you saved all pages locally as JSON files (or just page 1 for simplicity)
+    const res = await fetch(`/data/latest-movies-page-${page}.json`);
+    const movies = await res.json();
 
+    // Manually set currentPage and totalPages if saved in JSON, or hardcode totalPages
     currentPage = page;
-    totalPages = data.total_pages;
+    totalPages = 10; // or read from JSON metadata
 
-    displayLatestMovies(data.results || []);
+    displayLatestMovies(movies);
     updatePaginationButtons();
   } catch (error) {
-    console.error('Error fetching latest movies:', error);
+    console.error('Error loading latest movies from JSON:', error);
   }
 }
 
