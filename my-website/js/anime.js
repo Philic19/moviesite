@@ -177,8 +177,8 @@ async function fetchNextPage() {
     return;
   }
 
-  let url = `${BASE_URL}/discover/movie?api_key=${API_KEY}&page=${currentPage}`;
-  if (genre) url += `&with_genres=${genre}`;
+   let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_original_language=ja&with_genres=16&sort_by=popularity.desc`;
+ if (genre) url += `&with_genres=${genre}`;
   if (year) url += `&primary_release_year=${year}`;
 
   try {
