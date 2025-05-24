@@ -14,6 +14,9 @@ async function fetchLatestMovies(page = 1) {
     const response = await fetch(`${BASE_URL}/movie/now_playing?api_key=${API_KEY}&language=en-US&page=${page}`);
     const data = await response.json();
 
+    // TMDB /movie/latest endpoint returns a single latest movie, so better use "now_playing" or "popular" for multiple latest movies:
+    // const response = await fetch(`${BASE_URL}/movie/now_playing?api_key=${API_KEY}&language=en-US&page=${page}`);
+
     totalPages = data.total_pages;
     currentPage = data.page;
 
