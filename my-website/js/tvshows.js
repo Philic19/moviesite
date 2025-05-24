@@ -15,7 +15,7 @@ const mediaType = 'tvShows'; // 🔁 CHANGED from 'movie' to 'tv'
 
 async function fetchLatestMovies(page = 1) {
  try {
-  const res = await fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${API_KEY}&page=${page}`);
+ const res = await fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${API_KEY}&page=${page}`);
   if (!res.ok) {
     throw new Error(`HTTP error! status: ${res.status}`);
   }
