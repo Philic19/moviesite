@@ -4,25 +4,71 @@ const IMG_URL = 'https://image.tmdb.org/t/p/original';
 
 let currentItem = null;
 let currentPage = 1;
-let totalPages = 100; // TMDB allows up to 100 pages for trending
+let totalPages = 100; // TMDB allows up to 100 pages max
 
 const latestMoviesList = document.getElementById('latest-movies-list');
 const prevBtn = document.getElementById('latest-prev-btn');
 const nextBtn = document.getElementById('latest-next-btn');
 const pageIndicator = document.getElementById('latest-page-indicator');
 
-const mediaType = 'movie'; // you can change this to 'tv' if needed
+const genreSelect = document.getElementById('genre-select');
+const yearSelect = document.getElementById('year-select');
 
-async function fetchLatestMovies(page = 1) {
+const mediaType = 'movie'; // keep as movie for this filter example
+
+// Fetch genres and populate the genre dropdown
+async function fetchGenres() {
   try {
-    const res = await fetch(`${BASE_URL}/trending/${mediaType}/week?api_key=${API_KEY}&page=${page}`);
+    const res = await fetch(`${BASE_URL}/genre/movie/list?api_key=${API_KEY}`);
+    if (!res.ok) throw new Error('Failed to fetch genres');
+    const data = await res.json();
+    data.genres.forEach(genre => {
+      const option = document.createElement('option');
+      option.value = genre.id;
+      option.textContent = genre.name;
+      genreSelect.appendChild(option);
+    });
+  } catch (err) {
+    console.error('Error loading genres:', err);
+  }
+}
+
+// Populate year dropdown for last 30 years
+function populateYearDropdown() {
+  const currentYear = new Date().getFullYear();
+  for (let year = currentYear; year >= currentYear - 30; year--) {
+    const option = document.createElement('option');
+    option.value = year;
+    option.textContent = year;
+    yearSelect.appendChild(option);
+  }
+}
+
+// Fetch movies with filters applied
+async function fetchFilteredMovies(page = 1) {
+  const genre = genreSelect.value;
+  const year = yearSelect.value;
+
+  let url = `${BASE_URL}/discover/movie?api_key=${API_KEY}&page=${page}`;
+
+  if (genre) {
+    url += `&with_genres=${genre}`;
+  }
+  if (year) {
+    url += `&primary_release_year=${year}`;
+  }
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
 
     currentPage = page;
+    totalPages = data.total_pages > 100 ? 100 : data.total_pages;
     displayLatestMovies(data.results || []);
     updatePaginationButtons();
   } catch (error) {
-    console.error("Error Fetching Trending:", error);
+    console.error("Error Fetching Filtered Movies:", error);
     displayLatestMovies([]);
   }
 }
@@ -106,15 +152,18 @@ function getStars(vote) {
 // Event listeners
 prevBtn.addEventListener('click', () => {
   if (currentPage > 1) {
-    fetchLatestMovies(currentPage - 1);
+    fetchFilteredMovies(currentPage - 1);
   }
 });
 
 nextBtn.addEventListener('click', () => {
   if (currentPage < totalPages) {
-    fetchLatestMovies(currentPage + 1);
+    fetchFilteredMovies(currentPage + 1);
   }
 });
+
+genreSelect.addEventListener('change', () => fetchFilteredMovies(1));
+yearSelect.addEventListener('change', () => fetchFilteredMovies(1));
 
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal').addEventListener('click', e => {
@@ -124,5 +173,7 @@ window.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
 });
 
-// Start loading the first page
-fetchLatestMovies(1);
+// Initialize filters and load first page
+fetchGenres();
+populateYearDropdown();
+fetchFilteredMovies(1);
