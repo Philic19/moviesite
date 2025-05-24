@@ -1,178 +1,103 @@
-const API_KEY = '277256e815b05aae4f56dd5dd45eaa97';
-const BASE_URL = 'https://api.themoviedb.org/3';
-const IMG_URL = 'https://image.tmdb.org/t/p/w342';
-const ANIME_KEYWORD = 210024;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Anime - XeYiu</title>
+  <link rel="stylesheet" href="css/home.css" />
+  <script defer src="js/anime.js"></script> <!-- Updated JS file for Anime -->
+</head>
+<body>
 
-let currentPage = 1;
-let totalPages = Infinity;
-let isLoading = false;
-let currentItem = null;
+  <div class="navbar">
+    <img src="https://media.istockphoto.com/id/1357081095/vector/cute-panda-watching-cinema-eating-pop-corn.jpg?s=612x612&w=0&k=20&c=_kiyQ64K7rBb9E8H_VHGFRLnLrCUZ2fTmeRrqH7AZL8=" alt="LOGO HERE" />
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="latest.html">Latest</a>
+      <a href="tvshows.html">TV Shows</a>
+      <a href="anime.html" class="active">Anime</a>
+      <input type="text" id="search-input-navbar" class="search-bar" placeholder="Search..." readonly />
+      <button id="theme-toggle">🌗</button>
+    </div>
+  </div>
 
-const animeList = document.getElementById('anime-list');
-const genreSelect = document.getElementById('genre-select');
-const yearSelect = document.getElementById('year-select');
-const pageIndicator = document.getElementById('anime-page-indicator');
-const movieCache = new Map();
+  <div class="genre-filter-container" style="text-align:center; margin: 20px;">
+    <label for="genre-select">Genre:</label>
+    <select id="genre-select"><option value="">All Genres</option></select>
 
-async function fetchGenres() {
-  try {
-    const res = await fetch(`${BASE_URL}/genre/tv/list?api_key=${API_KEY}`);
-    const data = await res.json();
-    data.genres.forEach(genre => {
-      const option = document.createElement('option');
-      option.value = genre.id;
-      option.textContent = genre.name;
-      genreSelect.appendChild(option);
-    });
-  } catch (err) {
-    console.error('Error loading genres:', err);
-  }
-}
+    <label for="year-select">Year:</label>
+    <select id="year-select"><option value="">All Years</option></select>
+  </div>
 
-function populateYearDropdown() {
-  const currentYear = new Date().getFullYear();
-  for (let y = currentYear; y >= currentYear - 30; y--) {
-    const option = document.createElement('option');
-    option.value = y;
-    option.textContent = y;
-    yearSelect.appendChild(option);
-  }
-}
+  <div class="row">
+    <h2>Anime</h2>
+    <div class="list anime-list" id="anime-list"></div>
+    <div class="pagination" style="text-align:center; margin: 20px;">
+      <span id="anime-page-indicator">Page 1</span>
+    </div>
+  </div>
 
-async function fetchNextPage() {
-  if (isLoading || currentPage > totalPages || currentPage > 100) return;
+  <div id="loader" style="display:none; text-align:center; padding: 20px;" role="status">⏳ Loading...</div>
 
-  isLoading = true;
-  pageIndicator.textContent = `Loading page ${currentPage}...`;
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <span class="close" id="modal-close" style="color: red; cursor: pointer;">&times;</span>
+      <div class="modal-body">
+        <img id="modal-image" src="" alt="" />
+        <div class="modal-text">
+          <h2 id="modal-title"></h2>
+          <div class="stars" id="modal-rating"></div>
+          <p id="modal-description"></p>
+        </div>
+      </div>
+      <div class="server-selector" style="margin-bottom:10px;">
+        <label for="server">Change Server:</label>
+        <select id="server">
+          <option value="vidsrc.cc">Vidsrc.cc</option>
+          <option value="vidsrc.me">Vidsrc.me</option>
+          <option value="player.videasy.net">Player.Videasy.net</option>
+        </select>
+      </div>
+      <iframe id="modal-video" width="100%" height="315" frameborder="0" allowfullscreen style="border-radius:8px;"></iframe>
+    </div>
+  </div>
 
-  const genre = genreSelect.value;
-const year = yearSelect.value;
-const cacheKey = `${genre}-${year}-${currentPage}`;
+  <div id="search-modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.9); overflow:auto; padding:20px; box-sizing:border-box;">
+    <span id="search-close-btn" style="font-size:28px; font-weight:bold; color:red; cursor:pointer; position:absolute; right:30px; top:30px;">&times;</span>
+    <input type="text" id="search-input" placeholder="Search for a movie or show..." style="width:100%; max-width:600px; padding:10px; font-size:18px; margin-bottom:20px;" />
+    <div id="search-results" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+  </div>
 
-if (movieCache.has(cacheKey)) {
-  const cached = movieCache.get(cacheKey);
-  appendAnime(cached.results);
-  totalPages = cached.totalPages;
-  currentPage++;
-  isLoading = false;
-  pageIndicator.textContent = `Page ${currentPage - 1}`;
-  return;
-}
+  <footer class="footer">
+    <div class="footer-content">
+      <p>&copy; Xe Yiu Movies. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="#" onclick="openDisclaimerModal()">Disclaimer</a>
+        <a href="#" id="open-about-btn">About Us</a>
+        <a href="#">Contact Us</a>
+      </div>
+    </div>
+  </footer>
 
-let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_keywords=${ANIME_KEYWORD}`;
-if (genre) url += `&with_genres=${genre}`;
-if (year) url += `&first_air_date_year=${year}`;
+  <div class="modal" id="disclaimer-modal" role="dialog" aria-modal="true" aria-labelledby="disclaimer-title" aria-hidden="true">
+    <div class="modal-content">
+      <span class="close" onclick="closeDisclaimerModal()" aria-label="Close Disclaimer Modal">&times;</span>
+      <h2 id="disclaimer-title">Disclaimer</h2>
+      <p>This website does not host or upload any video/media files. All content such as posters, summaries, and streaming links are sourced from publicly available platforms or third-party services. We do not claim ownership of any media content.</p>
+      <p>All trademarks, logos, and media are the property of their respective owners. If you believe your rights are being violated, please <a href="#">contact us</a> and we will take appropriate action.</p>
+      <p>Use this website at your own discretion. We are not liable for any issues or damages that may arise from using external links or information on this site.</p>
+    </div>
+  </div>
 
-try {
-  const res = await fetch(url);
-  const data = await res.json();
+  <div id="about-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="about-title" aria-hidden="true" style="display:none; justify-content:center; align-items:center;">
+    <div class="modal-content" style="max-width:600px; position:relative;">
+      <span class="close" id="close-about-btn" aria-label="Close About Modal" style="position:absolute; top:10px; right:10px; font-size:24px;">&times;</span>
+      <h2 id="about-title">About Us</h2>
+      <p>Welcome to Xeyiu Collections, your one-stop destination for discovering trending movies, TV shows, and anime.</p>
+      <p>We aim to provide a seamless experience to explore popular entertainment from various genres and categories.</p>
+      <p>Thank you for visiting and being part of our growing community.</p>
+    </div>
+  </div>
 
-  movieCache.set(cacheKey, {
-    results: data.results || [],
-    totalPages: data.total_pages
-  });
-
-  totalPages = data.total_pages;
-  appendAnime(data.results || []);
-  currentPage++;
-  pageIndicator.textContent = `Page ${currentPage - 1}`;
-} catch (err) {
-  console.error('Error fetching anime:', err);
-} finally {
-  isLoading = false;
-}
-}
-
-function appendAnime(shows) {
-  if (!shows.length) {
-    const msg = document.createElement('p');
-    msg.textContent = 'No anime found.';
-    animeList.appendChild(msg);
-    return;
-  }
-
-  shows.forEach(show => {
-    const img = document.createElement('img');
-    img.src = show.poster_path ? `${IMG_URL}${show.poster_path}` : '';
-    img.alt = show.name || 'No title';
-    img.title = show.name || '';
-    img.loading = 'lazy';
-    img.style.cursor = 'pointer';
-    img.onclick = () => showDetails({ ...show, media_type: 'tv' });
-    animeList.appendChild(img);
-  });
-}
-
-function resetAnime() {
-  animeList.innerHTML = '';
-  currentPage = 1;
-  totalPages = Infinity;
-  movieCache.clear();
-  fetchNextPage();
-}
-
-function showDetails(item) {
-  currentItem = item;
-  document.getElementById('modal-title').textContent = item.name || item.title || 'No title';
-  document.getElementById('modal-description').textContent = item.overview || 'No description.';
-  document.getElementById('modal-image').src = item.poster_path ? `${IMG_URL}${item.poster_path}` : '';
-  document.getElementById('modal-rating').innerHTML = getStars(item.vote_average || 0);
-
-  const serverSelect = document.getElementById('server');
-  if (serverSelect) {
-    serverSelect.value = 'vidsrc.cc';
-    serverSelect.onchange = changeServer;
-  }
-
-  document.getElementById('modal').style.display = 'flex';
-  changeServer();
-}
-
-function changeServer() {
-  if (!currentItem) return;
-  const server = document.getElementById('server').value;
-  const embedURL =
-    server === 'vidsrc.cc'
-      ? `https://vidsrc.cc/v2/embed/tv/${currentItem.id}`
-      : server === 'vidsrc.me'
-      ? `https://vidsrc.net/embed/tv/?tmdb=${currentItem.id}`
-      : `https://player.videasy.net/tv/${currentItem.id}`;
-
-  const videoFrame = document.getElementById('modal-video');
-  if (videoFrame) videoFrame.src = embedURL;
-}
-
-function closeModal() {
-  document.getElementById('modal').style.display = 'none';
-  const videoFrame = document.getElementById('modal-video');
-  if (videoFrame) videoFrame.src = '';
-}
-
-function getStars(vote) {
-  const full = Math.floor(vote / 2);
-  const half = vote % 2 >= 1 ? 1 : 0;
-  return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - half);
-}
-
-// Infinite scroll
-window.addEventListener('scroll', () => {
-  if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300) {
-    fetchNextPage();
-  }
-});
-
-genreSelect.addEventListener('change', resetAnime);
-yearSelect.addEventListener('change', resetAnime);
-document.getElementById('modal-close').addEventListener('click', closeModal);
-document.getElementById('modal').addEventListener('click', e => {
-  if (e.target.id === 'modal') closeModal();
-});
-window.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
-});
-
-// Initial Load
-fetchGenres();
-populateYearDropdown();
-resetAnime();
-
+</body>
+</html>
