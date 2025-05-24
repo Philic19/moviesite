@@ -1,6 +1,6 @@
 const API_KEY = '277256e815b05aae4f56dd5dd45eaa97';
 const BASE_URL = 'https://api.themoviedb.org/3';
-const IMG_URL = 'https://image.tmdb.org/t/p/w15';
+const IMG_URL = 'https://image.tmdb.org/t/p/w154';
 
 let currentItems = {
   movies: [],
@@ -10,43 +10,53 @@ let currentItems = {
 
 let currentItem = null;
 
-async function fetchTrending(type, page = 1) {
+async function fetchWithCache(url, cacheKey, maxAgeMinutes = 60) {
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    const { timestamp, data } = JSON.parse(cached);
+    const age = (Date.now() - timestamp) / (1000 * 60);
+    if (age < maxAgeMinutes) {
+      return data;
+    }
+  }
+
   try {
-    const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}&page=${page}`);
+    const res = await fetch(url);
     const data = await res.json();
-    return data.results || [];
+    localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
+    return data;
   } catch (error) {
-    console.error("Error Fetching Trending:", error);
+    console.error("Fetch failed:", error);
     return [];
   }
 }
 
+async function fetchTrending(type, page = 1) {
+  const url = `${BASE_URL}/trending/${type}/week?api_key=${API_KEY}&page=${page}`;
+  const cacheKey = `trending-${type}-p${page}`;
+  const data = await fetchWithCache(url, cacheKey);
+  return data.results || [];
+}
+
 async function fetchTrendingAnime() {
   let allResults = [];
-  try {
-    for (let page = 1; page <= 1; page++) {
-      const res = await fetch(`${BASE_URL}/trending/tv/week?api_key=${API_KEY}&page=${page}`);
-      const data = await res.json();
-      const filtered = data.results.filter(item =>
-        item.original_language === 'ja' && item.genre_ids.includes(16)
-      );
-      allResults = allResults.concat(filtered);
-    }
-  } catch (error) {
-    console.error("Error Fetching Anime:", error);
+  for (let page = 1; page <= 1; page++) {
+    const url = `${BASE_URL}/trending/tv/week?api_key=${API_KEY}&page=${page}`;
+    const cacheKey = `trending-anime-p${page}`;
+    const data = await fetchWithCache(url, cacheKey);
+    const filtered = (data.results || []).filter(item =>
+      item.original_language === 'ja' && item.genre_ids.includes(16)
+    );
+    allResults = allResults.concat(filtered);
   }
   return allResults;
 }
 
 async function fetchGenres(type = 'movie') {
-  try {
-    const res = await fetch(`${BASE_URL}/genre/${type}/list?api_key=${API_KEY}`);
-    const data = await res.json();
-    return data.genres || [];
-  } catch (error) {
-    console.error("Error fetching genres:", error);
-    return [];
-  }
+  const url = `${BASE_URL}/genre/${type}/list?api_key=${API_KEY}`;
+  const cacheKey = `genres-${type}`;
+  const data = await fetchWithCache(url, cacheKey);
+  return data.genres || [];
 }
 
 function displayBanner(item) {
