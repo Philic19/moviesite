@@ -7,10 +7,9 @@ let currentItems = {
   anime: []
 };
 
-
 async function fetchTrending(type, page = 1) {
   try {
- const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}&page=${page}`);
+    const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}&page=${page}`);
     const data = await res.json();
     return data.results;
   } catch (error) {
@@ -57,7 +56,7 @@ function displayList(items, containerId) {
   container.innerHTML = '';
   items.forEach(item => {
     const img = document.createElement('img');
-    img.src = item.poster_path ? `${IMG_URL}${item.poster_path}` : 'fallback.jpg';
+    img.src = `${IMG_URL}${item.poster_path}`;
     img.alt = item.title || item.name || 'Media Thumbnail';
     img.onclick = () => showDetails(item);
     img.loading = 'lazy';
@@ -68,7 +67,7 @@ function displayList(items, containerId) {
 function getStars(vote) {
   const full = Math.floor(vote / 2);
   const half = vote % 2 >= 1 ? 1 : 0;
-  return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - half);
+  return '★'.repeat(full) + (half ? '⯨' : '') + '☆'.repeat(5 - full - half);
 }
 
 function showDetails(item) {
@@ -143,6 +142,33 @@ async function searchTMDB() {
   }
 }
 
+function populateGenreFilter(selectId, genres) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  genres.forEach(genre => {
+    const option = document.createElement('option');
+    option.value = genre.id;
+    option.textContent = genre.name;
+    select.appendChild(option);
+  });
+}
+
+function addGenreFilterListener(selectId, itemsKey, containerId) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  select.addEventListener('change', function () {
+    const selectedGenre = parseInt(this.value);
+    if (isNaN(selectedGenre)) {
+      displayList(currentItems[itemsKey], containerId);
+    } else {
+      const filtered = currentItems[itemsKey].filter(item =>
+        item.genre_ids.includes(selectedGenre)
+      );
+      displayList(filtered, containerId);
+    }
+  });
+}
+
 async function init() {
   const movies = await fetchTrending('movie');
   const tvShows = await fetchTrending('tv');
@@ -157,30 +183,19 @@ async function init() {
   displayList(tvShows, 'tvshows-list');
   displayList(anime, 'anime-list');
 
-  const genres = await fetchGenres('movie');
-  const genreSelect = document.getElementById('genre-filter');
-  if (genreSelect) {
-    genres.forEach(genre => {
-      const option = document.createElement('option');
-      option.value = genre.id;
-      option.textContent = genre.name;
-      genreSelect.appendChild(option);
-    });
+  const [movieGenres, tvGenres] = await Promise.all([
+    fetchGenres('movie'),
+    fetchGenres('tv')
+  ]);
 
-    genreSelect.addEventListener('change', function () {
-      const selectedGenre = this.value;
-      if (selectedGenre === 'all') {
-        displayList(currentItems.movies, 'movies-list');
-      } else {
-        const filtered = currentItems.movies.filter(movie =>
-          movie.genre_ids.includes(parseInt(selectedGenre))
-        );
-        displayList(filtered, 'movies-list');
-      }
-    });
-  }
+  populateGenreFilter('genre-filter-movie', movieGenres);
+  populateGenreFilter('genre-filter-tv', tvGenres);
+  populateGenreFilter('genre-filter-anime', tvGenres);
+
+  addGenreFilterListener('genre-filter-movie', 'movies', 'movies-list');
+  addGenreFilterListener('genre-filter-tv', 'tvShows', 'tvshows-list');
+  addGenreFilterListener('genre-filter-anime', 'anime', 'anime-list');
 }
-
 
 window.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
@@ -200,7 +215,6 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
   document.body.classList.toggle('light-mode');
 });
 
-//disclaimer pop up page
 function openDisclaimerModal() {
   document.getElementById('disclaimer-modal').style.display = 'flex';
 }
@@ -209,15 +223,12 @@ function closeDisclaimerModal() {
   document.getElementById('disclaimer-modal').style.display = 'none';
 }
 
-// Optional: Close modal when clicking outside it
 window.addEventListener('click', function(e) {
   const modal = document.getElementById('disclaimer-modal');
   if (e.target === modal) {
     modal.style.display = 'none';
   }
 });
-
-
 
 let currentBannerIndex = 0;
 
