@@ -1,4 +1,4 @@
-// scripts/fetch-latest-movies.js
+
 const fetch = require('node-fetch');
 const fs = require('fs');
 
@@ -17,14 +17,9 @@ async function fetchPage(page) {
     const firstPageData = await fetchPage(1);
     const totalPages = firstPageData.total_pages;
 
-    // Save first page results
+
     fs.writeFileSync('data/latest-movies-page-1.json', JSON.stringify(firstPageData.results, null, 2));
 
-    // (Optional) Fetch and save more pages, or just do the first page
-    // for (let p = 2; p <= totalPages && p <= 5; p++) {
-    //   const pageData = await fetchPage(p);
-    //   fs.writeFileSync(`data/latest-movies-page-${p}.json`, JSON.stringify(pageData.results, null, 2));
-    // }
 
     console.log('Fetched and saved latest movies JSON files.');
   } catch (e) {
