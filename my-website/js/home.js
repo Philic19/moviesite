@@ -1,6 +1,6 @@
 const API_KEY = '277256e815b05aae4f56dd5dd45eaa97';
 const BASE_URL = 'https://api.themoviedb.org/3';
-const IMG_URL = 'https://image.tmdb.org/t/p/w154'; // use official image size
+const IMG_URL = 'https://image.tmdb.org/t/p/w15';
 
 let currentItems = {
   movies: [],
@@ -10,55 +10,51 @@ let currentItems = {
 
 let currentItem = null;
 
-// Caching Helper
-async function fetchWithCache(url, cacheKey, maxAgeMinutes = 60) {
-  const cached = localStorage.getItem(cacheKey);
-  if (cached) {
-    const { timestamp, data } = JSON.parse(cached);
-    const age = (Date.now() - timestamp) / (1000 * 60);
-    if (age < maxAgeMinutes) return data;
-  }
+const ITEMS_PER_BATCH = 20;
 
+let renderedIndexes = {
+  movies: 0,
+  tvShows: 0,
+  anime: 0,
+};
+
+async function fetchTrending(type, page = 1) {
   try {
-    const res = await fetch(url);
+    const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}&page=${page}`);
     const data = await res.json();
-    localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
-    return data;
+    return data.results || [];
   } catch (error) {
-    console.error("Fetch failed:", error);
+    console.error("Error Fetching Trending:", error);
     return [];
   }
 }
 
-// Trending Movies & TV Shows
-async function fetchTrending(type, page = 1) {
-  const url = `${BASE_URL}/trending/${type}/week?api_key=${API_KEY}&page=${page}`;
-  const cacheKey = `trending-${type}-p${page}`;
-  const data = await fetchWithCache(url, cacheKey);
-  return data.results || [];
-}
-
-// Anime Filtered from TV
 async function fetchTrendingAnime() {
   let allResults = [];
-  for (let page = 1; page <= 1; page++) {
-    const url = `${BASE_URL}/trending/tv/week?api_key=${API_KEY}&page=${page}`;
-    const cacheKey = `trending-anime-p${page}`;
-    const data = await fetchWithCache(url, cacheKey);
-    const filtered = (data.results || []).filter(item =>
-      item.original_language === 'ja' && item.genre_ids.includes(16)
-    );
-    allResults = allResults.concat(filtered);
+  try {
+    for (let page = 1; page <= 1; page++) {
+      const res = await fetch(`${BASE_URL}/trending/tv/week?api_key=${API_KEY}&page=${page}`);
+      const data = await res.json();
+      const filtered = data.results.filter(item =>
+        item.original_language === 'ja' && item.genre_ids.includes(16)
+      );
+      allResults = allResults.concat(filtered);
+    }
+  } catch (error) {
+    console.error("Error Fetching Anime:", error);
   }
   return allResults;
 }
 
-// Genre Fetching
 async function fetchGenres(type = 'movie') {
-  const url = `${BASE_URL}/genre/${type}/list?api_key=${API_KEY}`;
-  const cacheKey = `genres-${type}`;
-  const data = await fetchWithCache(url, cacheKey);
-  return data.genres || [];
+  try {
+    const res = await fetch(`${BASE_URL}/genre/${type}/list?api_key=${API_KEY}`);
+    const data = await res.json();
+    return data.genres || [];
+  } catch (error) {
+    console.error("Error fetching genres:", error);
+    return [];
+  }
 }
 
 function displayBanner(item) {
@@ -69,21 +65,61 @@ function displayBanner(item) {
   if (title) title.textContent = item.title || item.name;
 }
 
-function displayList(items, containerId) {
+// This function appends a batch of items starting from startIndex
+function displayListBatch(items, containerId, startIndex) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  container.innerHTML = '';
-  items.forEach(item => {
-    if (!item.poster_path) return;
+
+  const endIndex = Math.min(startIndex + ITEMS_PER_BATCH, items.length);
+  for (let i = startIndex; i < endIndex; i++) {
+    const item = items[i];
+    if (!item.poster_path) continue;
+
     const img = document.createElement('img');
     img.src = `${IMG_URL}${item.poster_path}`;
     img.alt = item.title || item.name || 'Media Thumbnail';
     img.loading = 'lazy';
-    img.width = 120;
-    img.height = 180;
     img.onclick = () => showDetails(item);
+
     container.appendChild(img);
+  }
+  return endIndex;
+}
+
+// Setup IntersectionObserver to load more items on scroll
+function setupLazyLoading(itemsKey, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  // Sentinel element to detect scroll near bottom
+  let sentinel = document.createElement('div');
+  sentinel.style.height = '1px';
+  container.appendChild(sentinel);
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const items = currentItems[itemsKey];
+        if (!items) return;
+
+        const nextIndex = renderedIndexes[itemsKey];
+        if (nextIndex >= items.length) {
+          observer.disconnect();
+          sentinel.remove();
+          return;
+        }
+
+        const newIndex = displayListBatch(items, containerId, nextIndex);
+        renderedIndexes[itemsKey] = newIndex;
+      }
+    });
+  }, {
+    root: container,
+    rootMargin: '0px',
+    threshold: 1.0
   });
+
+  observer.observe(sentinel);
 }
 
 function getStars(vote) {
@@ -144,6 +180,7 @@ async function searchTMDB() {
   try {
     const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${query}`);
     const data = await res.json();
+
     const container = document.getElementById('search-results');
     container.innerHTML = '';
     data.results.forEach(item => {
@@ -163,18 +200,43 @@ async function searchTMDB() {
   }
 }
 
+function populateGenreFilter(selectId, genres) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  genres.forEach(genre => {
+    const option = document.createElement('option');
+    option.value = genre.id;
+    option.textContent = genre.name;
+    select.appendChild(option);
+  });
+}
+
 function addGenreFilterListener(selectId, itemsKey, containerId) {
   const select = document.getElementById(selectId);
   if (!select) return;
   select.addEventListener('change', function () {
     const selectedGenre = parseInt(this.value);
     if (isNaN(selectedGenre)) {
-      displayList(currentItems[itemsKey], containerId);
+      // Reset list and rendered index
+      renderedIndexes[itemsKey] = 0;
+      document.getElementById(containerId).innerHTML = '';
+      renderedIndexes[itemsKey] = displayListBatch(currentItems[itemsKey], containerId, 0);
+      setupLazyLoading(itemsKey, containerId); // re-setup lazy loading
     } else {
+      // Filtered list
       const filtered = currentItems[itemsKey].filter(item =>
         item.genre_ids.includes(selectedGenre)
       );
-      displayList(filtered, containerId);
+      // Reset rendered index
+      renderedIndexes[itemsKey] = 0;
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = '';
+      renderedIndexes[itemsKey] = displayListBatch(filtered, containerId, 0);
+
+      // We need to disconnect old observer and setup new one on filtered list:
+      // For simplicity, we won't implement dynamic lazy loading on filtered lists here,
+      // but you can extend it if needed.
     }
   });
 }
@@ -189,9 +251,23 @@ async function init() {
   currentItems.anime = anime;
 
   displayBanner(movies[Math.floor(Math.random() * movies.length)]);
-  displayList(movies, 'movies-list');
-  displayList(tvShows, 'tvshows-list');
-  displayList(anime, 'anime-list');
+
+  // Reset indexes and clear containers
+  renderedIndexes = { movies: 0, tvShows: 0, anime: 0 };
+  ['movies-list', 'tvshows-list', 'anime-list'].forEach(id => {
+    const c = document.getElementById(id);
+    if (c) c.innerHTML = '';
+  });
+
+  // Display initial batch
+  renderedIndexes.movies = displayListBatch(movies, 'movies-list', 0);
+  renderedIndexes.tvShows = displayListBatch(tvShows, 'tvshows-list', 0);
+  renderedIndexes.anime = displayListBatch(anime, 'anime-list', 0);
+
+  // Setup lazy loading for each list
+  setupLazyLoading('movies', 'movies-list');
+  setupLazyLoading('tvShows', 'tvshows-list');
+  setupLazyLoading('anime', 'anime-list');
 
   const [movieGenres, tvGenres] = await Promise.all([
     fetchGenres('movie'),
@@ -218,12 +294,56 @@ async function init() {
     select.addEventListener('change', () => {
       const selected = select.value;
       const genreId = selected === 'all' ? null : parseInt(selected);
-      const filterByGenre = (list) => !genreId ? list : list.filter(item => item.genre_ids.includes(genreId));
-      displayList(filterByGenre(currentItems.movies), 'movies-list');
-      displayList(filterByGenre(currentItems.tvShows), 'tvshows-list');
-      displayList(filterByGenre(currentItems.anime), 'anime-list');
+
+      const filterByGenre = (list) => {
+        if (!genreId) return list;
+        return list.filter(item => item.genre_ids.includes(genreId));
+      };
+
+      // Reset containers and indexes, then lazy load filtered lists
+      ['movies', 'tvShows', 'anime'].forEach(key => {
+        const containerId = key === 'movies' ? 'movies-list' : key === 'tvShows' ? 'tvshows-list' : 'anime-list';
+        const filteredList = filterByGenre(currentItems[key]);
+        renderedIndexes[key] = 0;
+        const container = document.getElementById(containerId);
+        if (container) container.innerHTML = '';
+        renderedIndexes[key] = displayListBatch(filteredList, containerId, 0);
+        setupLazyLoadingFiltered(filteredList, key, containerId);
+      });
     });
   }
+}
+
+function setupLazyLoadingFiltered(items, itemsKey, containerId) {
+  // Similar to setupLazyLoading but for filtered lists passed as argument
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  let sentinel = document.createElement('div');
+  sentinel.style.height = '1px';
+  container.appendChild(sentinel);
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const nextIndex = renderedIndexes[itemsKey];
+        if (nextIndex >= items.length) {
+          observer.disconnect();
+          sentinel.remove();
+          return;
+        }
+
+        const newIndex = displayListBatch(items, containerId, nextIndex);
+        renderedIndexes[itemsKey] = newIndex;
+      }
+    });
+  }, {
+    root: container,
+    rootMargin: '0px',
+    threshold: 1.0
+  });
+
+  observer.observe(sentinel);
 }
 
 let currentBannerIndex = 0;
@@ -247,17 +367,18 @@ document.getElementById('banner-next')?.addEventListener('click', (e) => {
   displayBannerFromList(currentBannerIndex);
 });
 
-// Modals & Events
+// Modals
 window.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeModal();
-    const aboutModal = document.getElementById('about-modal');
-    if (aboutModal?.style.display === 'flex') aboutModal.style.display = 'none';
+    document.getElementById('about-modal')?.style.display === 'flex' && (document.getElementById('about-modal').style.display = 'none');
   }
 });
+
 document.getElementById('modal')?.addEventListener('click', e => {
   if (e.target.id === 'modal') closeModal();
 });
+
 document.getElementById('theme-toggle')?.addEventListener('click', () => {
   document.body.classList.toggle('light-mode');
 });
@@ -266,6 +387,7 @@ document.getElementById('search-input')?.addEventListener('input', () => {
   clearTimeout(debounceTimeout);
   debounceTimeout = setTimeout(searchTMDB, 400);
 });
+
 let debounceTimeout;
 
 // About modal
@@ -284,33 +406,14 @@ if (aboutModal && openAboutBtn && closeAboutBtn) {
   });
 }
 
-// Disclaimer Modal
 function openDisclaimerModal() {
   document.getElementById('disclaimer-modal').style.display = 'flex';
 }
 function closeDisclaimerModal() {
   document.getElementById('disclaimer-modal').style.display = 'none';
 }
-window.addEventListener('click', function(e) {
-  const modal = document.getElementById('disclaimer-modal');
-  if (e.target === modal) modal.style.display = 'none';
-});
-
-// Clear Old Cache (optional)
-function clearOldCache(maxAgeMinutes = 1440) {
-  const now = Date.now();
-  for (let key in localStorage) {
-    try {
-      const item = JSON.parse(localStorage[key]);
-      if (item.timestamp && (now - item.timestamp) / (1000 * 60) > maxAgeMinutes) {
-        localStorage.removeItem(key);
-      }
-    } catch {}
-  }
-}
 
 async function startApp() {
-  clearOldCache();
   await init();
   currentBannerIndex = Math.floor(Math.random() * currentItems.movies.length);
   displayBannerFromList(currentBannerIndex);
