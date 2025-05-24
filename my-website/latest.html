@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Latest Movies - XeYiu</title>
-  <link rel="stylesheet" href="css/home.css"> <!-- Use your minified CSS -->
-  <script defer src="js/latest.js"></script> <!-- We'll create this -->
+  <link rel="stylesheet" href="css/home.css" />
+  <script defer src="js/latest.js"></script>
 </head>
 <body>
 
   <div class="navbar">
-    <img src="https://media.istockphoto.com/id/1357081095/vector/cute-panda-watching-cinema-eating-pop-corn.jpg?s=612x612&w=0&k=20&c=_kiyQ64K7rBb9E8H_VHGFRLnLrCUZ2fTmeRrqH7AZL8=" alt="LOGO HERE"  />
+    <img src="https://media.istockphoto.com/id/1357081095/vector/cute-panda-watching-cinema-eating-pop-corn.jpg?s=612x612&w=0&k=20&c=_kiyQ64K7rBb9E8H_VHGFRLnLrCUZ2fTmeRrqH7AZL8=" alt="LOGO HERE" />
     <div class="nav-links">
       <a href="index.html">Home</a>
       <a href="latest.html" class="active">Latest</a>
@@ -22,65 +22,64 @@
   </div>
 
   <div class="genre-filter-container" style="text-align:center; margin: 20px;">
-     <label for="genre-select">Genre:</label>
-     <select id="genre-select"><option value="">All Genres</option></select>
+    <label for="genre-select">Genre:</label>
+    <select id="genre-select"><option value="">All Genres</option></select>
 
     <label for="year-select">Year:</label>
     <select id="year-select"><option value="">All Years</option></select>
   </div>
-  
+
   <div class="row">
     <h2>Latest Movies</h2>
     <div class="list latest-list" id="latest-movies-list"></div>
+    <!-- Remove pagination buttons since infinite scroll -->
     <div class="pagination" style="text-align:center; margin: 20px;">
-  <button id="latest-prev-btn" disabled>⬅ Prev</button>
-  <span id="latest-page-indicator">Page 1</span>
-  <button id="latest-next-btn">Next ➡</button>
+      <span id="latest-page-indicator">Page 1</span>
     </div>
   </div>
 
+  <div id="loader" style="display:none; text-align:center; padding: 20px;" role="status">⏳ Loading...</div>
+
   <div class="modal" id="modal">
-  <div class="modal-content">
-    <span class="close" id="modal-close" style="color: red; cursor: pointer;">&times;</span>
-    <div class="modal-body">
-      <img id="modal-image" src="" alt="" />
-      <div class="modal-text">
-        <h2 id="modal-title"></h2>
-        <div class="stars" id="modal-rating"></div>
-        <p id="modal-description"></p>
+    <div class="modal-content">
+      <span class="close" id="modal-close" style="color: red; cursor: pointer;">&times;</span>
+      <div class="modal-body">
+        <img id="modal-image" src="" alt="" />
+        <div class="modal-text">
+          <h2 id="modal-title"></h2>
+          <div class="stars" id="modal-rating"></div>
+          <p id="modal-description"></p>
+        </div>
       </div>
+      <div class="server-selector" style="margin-bottom:10px;">
+        <label for="server">Change Server:</label>
+        <select id="server">
+          <option value="vidsrc.cc">Vidsrc.cc</option>
+          <option value="vidsrc.me">Vidsrc.me</option>
+          <option value="player.videasy.net">Player.Videasy.net</option>
+        </select>
+      </div>
+      <iframe id="modal-video" width="100%" height="315" frameborder="0" allowfullscreen style="border-radius:8px;"></iframe>
     </div>
-    <div class="server-selector" style="margin-bottom:10px;">
-      <label for="server">Change Server:</label>
-      <select id="server">
-        <option value="vidsrc.cc">Vidsrc.cc</option>
-        <option value="vidsrc.me">Vidsrc.me</option>
-        <option value="player.videasy.net">Player.Videasy.net</option>
-      </select>
-    </div>
-    <iframe id="modal-video" width="100%" height="315" frameborder="0" allowfullscreen style="border-radius:8px;"></iframe>
   </div>
-</div>
-  
-    <div class="search-modal" id="search-modal">
+
+  <div class="search-modal" id="search-modal">
     <span class="close" onclick="closeSearchModal()" style="color: red;">&times;</span>
     <input type="text" id="search-input" placeholder="Search for a movie or show..." oninput="searchTMDB()" />
     <div class="results" id="search-results"></div>
   </div>
 
-
   <footer class="footer">
     <div class="footer-content">
       <p>&copy; Xe Yiu Movies. All rights reserved.</p>
-       <div class="footer-links">
+      <div class="footer-links">
         <a href="#" onclick="openDisclaimerModal()">Disclaimer</a>
         <a href="#" id="open-about-btn">About Us</a>
         <a href="#">Contact Us</a>
       </div>
     </div>
   </footer>
-<!-- Loading Indicator -->
-  <div id="loader" style="display:none; text-align:center; padding: 20px;" role="status">⏳ Loading...</div>
+
   <!-- Disclaimer Modal -->
   <div class="modal" id="disclaimer-modal" role="dialog" aria-modal="true" aria-labelledby="disclaimer-title" aria-hidden="true">
     <div class="modal-content">
@@ -91,6 +90,7 @@
       <p>Use this website at your own discretion. We are not liable for any issues or damages that may arise from using external links or information on this site.</p>
     </div>
   </div>
+
   <!-- About Us Modal -->
   <div id="about-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="about-title" aria-hidden="true" style="display:none; justify-content:center; align-items:center;">
     <div class="modal-content" style="max-width:600px; position:relative;">
@@ -101,5 +101,6 @@
       <p>Thank you for visiting and being part of our growing community.</p>
     </div>
   </div>
+
 </body>
 </html>
