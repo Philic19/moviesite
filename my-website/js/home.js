@@ -1,7 +1,7 @@
 // TMDB API key for authenticating requests to The Movie Database API
 const API_KEY = '277256e815b05aae4f56dd5dd45eaa97';
 const BASE_URL = 'https://api.themoviedb.org/3'; // Base URL for TMDB API endpoints
-const IMG_URL = 'https://image.tmdb.org/t/p/original'; // Base URL for loading images like posters and backdrops from TMDB
+const IMG_URL = 'https://image.tmdb.org/t/p/w500'; // Base URL for loading images like posters and backdrops from TMDB
 let currentItems = {
   movies: [],
   tvShows: [],
