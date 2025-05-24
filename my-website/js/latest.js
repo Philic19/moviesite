@@ -77,9 +77,18 @@ function openModalWithMovie(movie) {
     modalRating.appendChild(star);
   }
   
-  // Hide video and server selector (unless you want to handle streaming here)
-  modalVideo.style.display = 'none';
-  serverSelectorContainer.style.display = 'none';
+ / Show video and server selector
+  modalVideo.style.display = 'block';
+  serverSelectorContainer.style.display = 'block';
+
+  // Load video from default server (first option)
+  serverSelector.selectedIndex = 0;
+  loadVideoFromServer(serverSelector.value, movie);
+
+  // When user changes server, update video iframe
+  serverSelector.onchange = () => {
+    loadVideoFromServer(serverSelector.value, movie);
+  };
 }
 
 // Close modal handler
