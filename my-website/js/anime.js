@@ -3,7 +3,6 @@ const BASE_URL = "https://api.themoviedb.org/3";
 const mediaType = "tv"; // 'tv' for anime shows
 
 const latestMoviesList = document.getElementById("latestMoviesList");
-const genreSelect = document.getElementById("genreSelect");
 const yearSelect = document.getElementById("yearSelect");
 const pageIndicator = document.getElementById("pageIndicator");
 
@@ -19,11 +18,9 @@ async function fetchNextPage() {
   isLoading = true;
   pageIndicator.textContent = `Loading page ${currentPage}...`;
 
-  // Default genre to 16 = Animation (Anime)
-  const genre = genreSelect.value || "16";
   const year = yearSelect.value;
 
-  const cacheKey = `${genre}-${year}-${currentPage}`;
+  const cacheKey = `${year}-${currentPage}`;
   if (movieCache.has(cacheKey)) {
     const cached = movieCache.get(cacheKey);
     appendShows(cached.results);
@@ -34,7 +31,8 @@ async function fetchNextPage() {
     return;
   }
 
-  let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_original_language=ja&with_genres=${genre}`;
+  let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_original_language=ja`;
+
   if (year) {
     url += `&first_air_date_year=${year}`;
   }
@@ -88,7 +86,6 @@ function appendShows(shows) {
   });
 }
 
-// Clear and reset results
 function resetResults() {
   currentPage = 1;
   totalPages = 1;
@@ -97,20 +94,14 @@ function resetResults() {
   fetchNextPage();
 }
 
-// Show details modal function (simplified)
 function showDetails(show) {
-  // For demonstration, just alert name and overview
   alert(`Title: ${show.name}\nOverview: ${show.overview || "No description."}`);
 }
 
-// Event listeners for filter changes
-genreSelect.addEventListener("change", resetResults);
 yearSelect.addEventListener("change", resetResults);
 
-// Initial fetch
 resetResults();
 
-// Infinite scroll - load next page when near bottom
 window.addEventListener("scroll", () => {
   if (
     window.innerHeight + window.scrollY >=
