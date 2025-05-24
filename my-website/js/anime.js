@@ -18,7 +18,10 @@ const animeCache = new Map();
 // Fetch next page of anime TV shows (Japanese, animation genre)
 async function fetchNextPage() {
   if (isLoading) return;
-  if (currentPage > totalPages || currentPage > 100) return;
+  if (currentPage > totalPages || currentPage > 100) {
+    pageIndicator.textContent = 'No more results.';
+    return;
+  }
 
   isLoading = true;
   pageIndicator.textContent = `Loading page ${currentPage}...`;
@@ -55,6 +58,7 @@ async function fetchNextPage() {
     pageIndicator.textContent = `Page ${currentPage - 1}`;
   } catch (error) {
     console.error("Error fetching anime:", error);
+    pageIndicator.textContent = 'Error loading data. Please try again.';
   } finally {
     isLoading = false;
   }
@@ -67,6 +71,8 @@ function appendAnime(animeShows) {
     }
     return;
   }
+
+  const fragment = document.createDocumentFragment();
 
   animeShows.forEach(show => {
     const img = document.createElement('img');
@@ -82,8 +88,10 @@ function appendAnime(animeShows) {
       media_type: 'tv'
     });
 
-    animeList.appendChild(img);
+    fragment.appendChild(img);
   });
+
+  animeList.appendChild(fragment);
 }
 
 // Reset and reload anime list on year filter change
@@ -147,13 +155,17 @@ function getStars(vote) {
   return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - half);
 }
 
-// Infinite scroll
+// Debounced infinite scroll
+let scrollTimeout = null;
 window.addEventListener('scroll', () => {
-  const scrollThreshold = 300; // px from bottom
-
-  if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - scrollThreshold)) {
-    fetchNextPage();
-  }
+  if (scrollTimeout) return;
+  scrollTimeout = setTimeout(() => {
+    scrollTimeout = null;
+    const scrollThreshold = 300; // px from bottom
+    if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - scrollThreshold)) {
+      fetchNextPage();
+    }
+  }, 200);
 });
 
 // Filter change handler
