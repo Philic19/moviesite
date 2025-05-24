@@ -11,17 +11,17 @@ const prevBtn = document.getElementById('latest-prev-btn');
 const nextBtn = document.getElementById('latest-next-btn');
 const pageIndicator = document.getElementById('latest-page-indicator');
 
-async function fetchLatestMovies(page = 1) {
+
+async function fetchLatestMovies(type, page = 1) {
   try {
-    const res = await fetch('data/latest.json');
+ const res = await fetch(`${BASE_URL}/trending/${type}/week?api_key=${API_KEY}&page=${page}`);
     const data = await res.json();
-    displayLatestMovies(data);
-    updatePaginationButtons();
+    return data.results;
   } catch (error) {
-    console.error('Error loading movie data:', error);
+    console.error("Error Fetching Trending:", error);
+    return [];
   }
 }
-
 
 function displayLatestMovies(movies) {
   latestMoviesList.innerHTML = ''; // Clear container
