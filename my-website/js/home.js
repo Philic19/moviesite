@@ -1,6 +1,6 @@
 const API_KEY = '277256e815b05aae4f56dd5dd45eaa97';
 const BASE_URL = 'https://api.themoviedb.org/3';
-const IMG_URL = 'https://image.tmdb.org/t/p/w154';
+const IMG_URL = 'https://image.tmdb.org/t/p/w154'; // use official image size
 
 let currentItems = {
   movies: [],
@@ -10,14 +10,13 @@ let currentItems = {
 
 let currentItem = null;
 
+// Caching Helper
 async function fetchWithCache(url, cacheKey, maxAgeMinutes = 60) {
   const cached = localStorage.getItem(cacheKey);
   if (cached) {
     const { timestamp, data } = JSON.parse(cached);
     const age = (Date.now() - timestamp) / (1000 * 60);
-    if (age < maxAgeMinutes) {
-      return data;
-    }
+    if (age < maxAgeMinutes) return data;
   }
 
   try {
@@ -31,6 +30,7 @@ async function fetchWithCache(url, cacheKey, maxAgeMinutes = 60) {
   }
 }
 
+// Trending Movies & TV Shows
 async function fetchTrending(type, page = 1) {
   const url = `${BASE_URL}/trending/${type}/week?api_key=${API_KEY}&page=${page}`;
   const cacheKey = `trending-${type}-p${page}`;
@@ -38,6 +38,7 @@ async function fetchTrending(type, page = 1) {
   return data.results || [];
 }
 
+// Anime Filtered from TV
 async function fetchTrendingAnime() {
   let allResults = [];
   for (let page = 1; page <= 1; page++) {
@@ -52,6 +53,7 @@ async function fetchTrendingAnime() {
   return allResults;
 }
 
+// Genre Fetching
 async function fetchGenres(type = 'movie') {
   const url = `${BASE_URL}/genre/${type}/list?api_key=${API_KEY}`;
   const cacheKey = `genres-${type}`;
@@ -77,6 +79,8 @@ function displayList(items, containerId) {
     img.src = `${IMG_URL}${item.poster_path}`;
     img.alt = item.title || item.name || 'Media Thumbnail';
     img.loading = 'lazy';
+    img.width = 120;
+    img.height = 180;
     img.onclick = () => showDetails(item);
     container.appendChild(img);
   });
@@ -140,7 +144,6 @@ async function searchTMDB() {
   try {
     const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${query}`);
     const data = await res.json();
-
     const container = document.getElementById('search-results');
     container.innerHTML = '';
     data.results.forEach(item => {
@@ -158,17 +161,6 @@ async function searchTMDB() {
   } catch (error) {
     console.error("Search failed:", error);
   }
-}
-
-function populateGenreFilter(selectId, genres) {
-  const select = document.getElementById(selectId);
-  if (!select) return;
-  genres.forEach(genre => {
-    const option = document.createElement('option');
-    option.value = genre.id;
-    option.textContent = genre.name;
-    select.appendChild(option);
-  });
 }
 
 function addGenreFilterListener(selectId, itemsKey, containerId) {
@@ -226,12 +218,7 @@ async function init() {
     select.addEventListener('change', () => {
       const selected = select.value;
       const genreId = selected === 'all' ? null : parseInt(selected);
-
-      const filterByGenre = (list) => {
-        if (!genreId) return list;
-        return list.filter(item => item.genre_ids.includes(genreId));
-      };
-
+      const filterByGenre = (list) => !genreId ? list : list.filter(item => item.genre_ids.includes(genreId));
       displayList(filterByGenre(currentItems.movies), 'movies-list');
       displayList(filterByGenre(currentItems.tvShows), 'tvshows-list');
       displayList(filterByGenre(currentItems.anime), 'anime-list');
@@ -260,18 +247,17 @@ document.getElementById('banner-next')?.addEventListener('click', (e) => {
   displayBannerFromList(currentBannerIndex);
 });
 
-// Modals
+// Modals & Events
 window.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeModal();
-    document.getElementById('about-modal')?.style.display === 'flex' && (document.getElementById('about-modal').style.display = 'none');
+    const aboutModal = document.getElementById('about-modal');
+    if (aboutModal?.style.display === 'flex') aboutModal.style.display = 'none';
   }
 });
-
 document.getElementById('modal')?.addEventListener('click', e => {
   if (e.target.id === 'modal') closeModal();
 });
-
 document.getElementById('theme-toggle')?.addEventListener('click', () => {
   document.body.classList.toggle('light-mode');
 });
@@ -280,7 +266,6 @@ document.getElementById('search-input')?.addEventListener('input', () => {
   clearTimeout(debounceTimeout);
   debounceTimeout = setTimeout(searchTMDB, 400);
 });
-
 let debounceTimeout;
 
 // About modal
@@ -299,6 +284,7 @@ if (aboutModal && openAboutBtn && closeAboutBtn) {
   });
 }
 
+// Disclaimer Modal
 function openDisclaimerModal() {
   document.getElementById('disclaimer-modal').style.display = 'flex';
 }
@@ -310,7 +296,21 @@ window.addEventListener('click', function(e) {
   if (e.target === modal) modal.style.display = 'none';
 });
 
+// Clear Old Cache (optional)
+function clearOldCache(maxAgeMinutes = 1440) {
+  const now = Date.now();
+  for (let key in localStorage) {
+    try {
+      const item = JSON.parse(localStorage[key]);
+      if (item.timestamp && (now - item.timestamp) / (1000 * 60) > maxAgeMinutes) {
+        localStorage.removeItem(key);
+      }
+    } catch {}
+  }
+}
+
 async function startApp() {
+  clearOldCache();
   await init();
   currentBannerIndex = Math.floor(Math.random() * currentItems.movies.length);
   displayBannerFromList(currentBannerIndex);
