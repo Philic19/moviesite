@@ -126,6 +126,16 @@ function changeServer() {
     embedURL = `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
   } else if (server === "vidsrc.me") {
     embedURL = `https://vidsrc.net/embed/${type}/?tmdb=${currentItem.id}`;
+    else if (server === "vidsrc.to") {
+    embedURL = `https://vidsrc.icu/embed/${type}/?tmdb=${currentItem.id}`;
+    else if (server === "vidsrc.icu") {
+    embedURL = `https://vidsrc.to/embed/${type}/?tmdb=${currentItem.id}`;
+    else if (server === "vidlink.pro") {
+    embedURL = `https://vidlink.pro/embed/${type}/?tmdb=${currentItem.id}`;
+    else if (server === "embed.su") {
+    embedURL = `https://embed.su/embed/${type}/?tmdb=${currentItem.id}`;
+    else if (server === "autoembed.cc") {
+    embedURL = `https://autoembed.cc/embed/${type}/?tmdb=${currentItem.id}`;
   } else if (server === "player.videasy.net") {
     embedURL = `https://player.videasy.net/${type}/${currentItem.id}`;
   }
