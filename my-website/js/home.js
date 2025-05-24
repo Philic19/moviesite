@@ -198,5 +198,23 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
   document.body.classList.toggle('light-mode');
 });
 
+//disclaimer pop up page
+function openDisclaimerModal() {
+  document.getElementById('disclaimer-modal').style.display = 'flex';
+}
+
+function closeDisclaimerModal() {
+  document.getElementById('disclaimer-modal').style.display = 'none';
+}
+
+// Optional: Close modal when clicking outside it
+window.addEventListener('click', function(e) {
+  const modal = document.getElementById('disclaimer-modal');
+  if (e.target === modal) {
+    modal.style.display = 'none';
+  }
+});
+
+
 
 init();
