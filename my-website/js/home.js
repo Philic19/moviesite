@@ -1,6 +1,6 @@
 const API_KEY = '277256e815b05aae4f56dd5dd45eaa97';
 const BASE_URL = 'https://api.themoviedb.org/3';
-const IMG_URL = 'https://image.tmdb.org/t/p/w185';
+const IMG_URL = 'https://image.tmdb.org/t/p/w154';
 
 let currentItems = {
   movies: [],
@@ -24,7 +24,7 @@ async function fetchTrending(type, page = 1) {
 async function fetchTrendingAnime() {
   let allResults = [];
   try {
-    for (let page = 1; page <= 3; page++) {
+    for (let page = 1; page <= 1; page++) {
       const res = await fetch(`${BASE_URL}/trending/tv/week?api_key=${API_KEY}&page=${page}`);
       const data = await res.json();
       const filtered = data.results.filter(item =>
