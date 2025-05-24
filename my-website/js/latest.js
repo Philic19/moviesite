@@ -8,9 +8,6 @@ let totalPages = Infinity; // unknown at start, updated on fetch
 let isLoading = false;
 
 const latestMoviesList = document.getElementById('latest-movies-list');
-// Remove prevBtn and nextBtn usage since infinite scroll
-// const prevBtn = document.getElementById('latest-prev-btn');
-// const nextBtn = document.getElementById('latest-next-btn');
 const pageIndicator = document.getElementById('latest-page-indicator');
 
 const genreSelect = document.getElementById('genre-select');
@@ -19,6 +16,116 @@ const yearSelect = document.getElementById('year-select');
 const mediaType = 'movie';
 
 const movieCache = new Map(); // cache with key `${genre}-${year}-${page}`
+
+// Search modal and elements
+const searchModal = document.getElementById('search-modal');
+const navbarSearchInput = document.getElementById('search-input-navbar');
+const searchInput = document.getElementById('search-input');
+const searchResults = document.getElementById('search-results');
+const searchCloseBtn = document.getElementById('search-close-btn');
+
+// Open search modal on navbar search input click
+navbarSearchInput.addEventListener('click', () => {
+  searchModal.style.display = 'block';
+  searchInput.value = '';
+  searchResults.innerHTML = '';
+  searchInput.focus();
+});
+
+// Close search modal on close button click
+searchCloseBtn.addEventListener('click', () => {
+  searchModal.style.display = 'none';
+  searchInput.value = '';
+  searchResults.innerHTML = '';
+});
+
+// Close search modal if clicking outside input/results
+searchModal.addEventListener('click', e => {
+  if (e.target === searchModal) {
+    searchModal.style.display = 'none';
+    searchInput.value = '';
+    searchResults.innerHTML = '';
+  }
+});
+
+// Search TMDB multi endpoint as user types, debounce to avoid too many requests
+let searchTimeout = null;
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  const query = searchInput.value.trim();
+  if (!query) {
+    searchResults.innerHTML = '';
+    return;
+  }
+
+  searchTimeout = setTimeout(() => {
+    searchTMDB(query);
+  }, 400);
+});
+
+async function searchTMDB(query) {
+  searchResults.innerHTML = '<p style="color:#fff;">Searching...</p>';
+
+  try {
+    const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&page=1`);
+    if (!res.ok) throw new Error(`Error: ${res.status}`);
+    const data = await res.json();
+
+    if (!data.results || data.results.length === 0) {
+      searchResults.innerHTML = '<p style="color:#fff;">No results found.</p>';
+      return;
+    }
+
+    renderSearchResults(data.results);
+  } catch (err) {
+    console.error('Search error:', err);
+    searchResults.innerHTML = '<p style="color:#f00;">Search failed. Try again.</p>';
+  }
+}
+
+function renderSearchResults(results) {
+  searchResults.innerHTML = '';
+  results.forEach(item => {
+    // Skip if no title or name
+    if (!item.title && !item.name) return;
+
+    const div = document.createElement('div');
+    div.style.cursor = 'pointer';
+    div.style.width = '150px';
+    div.style.color = '#fff';
+    div.style.textAlign = 'center';
+
+    const img = document.createElement('img');
+    img.src = item.poster_path ? `https://image.tmdb.org/t/p/w154${item.poster_path}` : '';
+    img.alt = item.title || item.name;
+    img.loading = 'lazy';
+    img.style.width = '100%';
+    img.style.borderRadius = '8px';
+    img.style.marginBottom = '5px';
+
+    const title = document.createElement('div');
+    title.textContent = item.title || item.name || 'No title';
+    title.style.fontSize = '14px';
+    title.style.overflow = 'hidden';
+    title.style.textOverflow = 'ellipsis';
+    title.style.whiteSpace = 'nowrap';
+
+    div.appendChild(img);
+    div.appendChild(title);
+
+    div.onclick = () => {
+      showDetails({
+        ...item,
+        media_type: item.media_type || (item.first_air_date ? 'tv' : 'movie'),
+      });
+      searchModal.style.display = 'none';
+      searchInput.value = '';
+      searchResults.innerHTML = '';
+    };
+
+    searchResults.appendChild(div);
+  });
+}
 
 // Fetch genres and populate the genre dropdown
 async function fetchGenres() {
@@ -180,9 +287,7 @@ function getStars(vote) {
   return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - half);
 }
 
-// Remove prev/next btn listeners as infinite scroll replaces them
-
-// Listen to scroll event for infinite scrolling
+// Infinite scroll
 window.addEventListener('scroll', () => {
   const scrollThreshold = 300; // pixels from bottom to trigger loading
 
