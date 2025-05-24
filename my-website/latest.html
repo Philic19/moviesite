@@ -3,50 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Xeyiu Collections</title>
-  <link rel="stylesheet" href="css/home.css">
-  <link rel="preload" href="css/latest.css" as="style">
-  <link rel="preload" href="js/latest.js" as="script">
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <script defer src="js/latest.js"></script>
+  <title>Latest Movies - XeYiu</title>
+  <link rel="stylesheet" href="css/home.min.css"> <!-- Use your minified CSS -->
+  <script defer src="js/latest.js"></script> <!-- We'll create this -->
 </head>
-
 <body>
+
   <div class="navbar">
-    <img src="https://media.istockphoto.com/id/1357081095/vector/cute-panda-watching-cinema-eating-pop-corn.jpg?s=612x612&w=0&k=20&c=_kiyQ64K7rBb9E8H_VHGFRLnLrCUZ2fTmeRrqH7AZL8=" alt="LOGO HERE"  />
+    <img src="your-logo.png" alt="LOGO HERE" />
     <div class="nav-links">
       <a href="index.html">Home</a>
-      <a href="latest.html">Latest</a>
+      <a href="latest.html" class="active">Latest</a>
       <a href="tv-shows.html">TV Shows</a>
       <a href="categories.html">Categories</a>
-      <input type="text" class="search-bar" placeholder="Search..." onfocus="openSearchModal()" />
+      <input type="text" class="search-bar" placeholder="Search..." />
       <button id="theme-toggle">🌗</button>
     </div>
   </div>
 
- <div id="moviesGrid" class="movies-grid">
-    <!-- Movie cards populated by JavaScript -->
+  <div class="row">
+    <h2>Latest Movies</h2>
+    <div class="list" id="latest-movies"></div>
   </div>
 
- <div class="search-modal" id="search-modal">
-    <span class="close" onclick="closeSearchModal()" style="color: red;">&times;</span>
-    <input type="text" id="search-input" placeholder="Search for a movie or show..." oninput="searchTMDB()" />
-    <div class="results" id="search-results"></div>
-  </div>
-
-<footer class="footer">
-  <div class="footer-content">
-    <p>&copy; Xe Yiu Movies. All rights reserved.</p>
-    <div class="footer-links">
-      <a href="#">Disclaimer</a>
-      <a href="#">About Us</a>
-      <a href="#">Contact Us</a>
+  <footer class="footer">
+    <div class="footer-content">
+      <p>&copy; Xe Yiu Movies. All rights reserved.</p>
     </div>
-  </div>
-</footer>
+  </footer>
 
-<script src="script.js"></script>
 </body>
 </html>
-
