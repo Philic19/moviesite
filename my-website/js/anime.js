@@ -1,130 +1,45 @@
-const genre = genreSelect.value;
-const year = yearSelect.value;
-const cacheKey = `${genre}-${year}-${currentPage}`;
+const API_KEY = '277256e815b05aae4f56dd5dd45eaa97';
+const BASE_URL = 'https://api.themoviedb.org/3';
+const IMG_URL = 'https://image.tmdb.org/t/p/w342';
+const ANIME_GENRE_ID = 16;
 
-if (movieCache.has(cacheKey)) {
-  const cached = movieCache.get(cacheKey);
-  appendAnime(cached.results);
-  totalPages = cached.totalPages;
-  currentPage++;
-  isLoading = false;
-  pageIndicator.textContent = `Page ${currentPage - 1}`;
-  return;
-}
+let currentPage = 1;
+let totalPages = Infinity;
+let isLoading = false;
 
-let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_keywords=${ANIME_KEYWORD}`;
-if (genre) url += `&with_genres=${genre}`;
-if (year) url += `&first_air_date_year=${year}`;
+const animeList = document.getElementById('anime-list');
+const genreSelect = document.getElementById('genre-select');
+const yearSelect = document.getElementById('year-select');
+const pageIndicator = document.getElementById('anime-page-indicator');
+const loader = document.getElementById('loader');
 
-try {
-  const res = await fetch(url);
-  const data = await res.json();
+function createAnimeCard(show) {
+  const card = document.createElement('div');
+  card.classList.add('card');
 
-  movieCache.set(cacheKey, {
-    results: data.results || [],
-    totalPages: data.total_pages
+  card.innerHTML = `
+    <img src="${show.poster_path ? IMG_URL + show.poster_path : 'https://via.placeholder.com/342x513?text=No+Image'}" alt="${show.name}">
+    <h4>${show.name}</h4>
+    <p>${show.first_air_date ? show.first_air_date.split('-')[0] : 'N/A'}</p>
+  `;
+
+  card.addEventListener('click', () => {
+    openModal(show);
   });
 
-  totalPages = data.total_pages;
-  appendAnime(data.results || []);
-  currentPage++;
-  pageIndicator.textContent = `Page ${currentPage - 1}`;
-} catch (err) {
-  console.error('Error fetching anime:', err);
-} finally {
-  isLoading = false;
-}
+  return card;
 }
 
-function appendAnime(shows) {
-  if (!shows.length) {
-    const msg = document.createElement('p');
-    msg.textContent = 'No anime found.';
-    animeList.appendChild(msg);
-    return;
-  }
+function openModal(show) {
+  const modal = document.getElementById('modal');
+  const modalImage = document.getElementById('modal-image');
+  const modalTitle = document.getElementById('modal-title');
+  const modalDescription = document.getElementById('modal-description');
+  const modalVideo = document.getElementById('modal-video');
 
-  shows.forEach(show => {
-    const img = document.createElement('img');
-    img.src = show.poster_path ? `${IMG_URL}${show.poster_path}` : '';
-    img.alt = show.name || 'No title';
-    img.title = show.name || '';
-    img.loading = 'lazy';
-    img.style.cursor = 'pointer';
-    img.onclick = () => showDetails({ ...show, media_type: 'tv' });
-    animeList.appendChild(img);
-  });
-}
+  modalImage.src = show.poster_path ? IMG_URL + show.poster_path : '';
+  modalTitle.textContent = show.name;
+  modalDescription.textContent = show.overview || 'No description available';
+  modalVideo.src = `https://vidsrc.to/embed/tv/${show.id}`;
 
-function resetAnime() {
-  animeList.innerHTML = '';
-  currentPage = 1;
-  totalPages = Infinity;
-  movieCache.clear();
-  fetchNextPage();
-}
-
-function showDetails(item) {
-  currentItem = item;
-  document.getElementById('modal-title').textContent = item.name || item.title || 'No title';
-  document.getElementById('modal-description').textContent = item.overview || 'No description.';
-  document.getElementById('modal-image').src = item.poster_path ? `${IMG_URL}${item.poster_path}` : '';
-  document.getElementById('modal-rating').innerHTML = getStars(item.vote_average || 0);
-
-  const serverSelect = document.getElementById('server');
-  if (serverSelect) {
-    serverSelect.value = 'vidsrc.cc';
-    serverSelect.onchange = changeServer;
-  }
-
-  document.getElementById('modal').style.display = 'flex';
-  changeServer();
-}
-
-function changeServer() {
-  if (!currentItem) return;
-  const server = document.getElementById('server').value;
-  const embedURL =
-    server === 'vidsrc.cc'
-      ? `https://vidsrc.cc/v2/embed/tv/${currentItem.id}`
-      : server === 'vidsrc.me'
-      ? `https://vidsrc.net/embed/tv/?tmdb=${currentItem.id}`
-      : `https://player.videasy.net/tv/${currentItem.id}`;
-
-  const videoFrame = document.getElementById('modal-video');
-  if (videoFrame) videoFrame.src = embedURL;
-}
-
-function closeModal() {
-  document.getElementById('modal').style.display = 'none';
-  const videoFrame = document.getElementById('modal-video');
-  if (videoFrame) videoFrame.src = '';
-}
-
-function getStars(vote) {
-  const full = Math.floor(vote / 2);
-  const half = vote % 2 >= 1 ? 1 : 0;
-  return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - half);
-}
-
-// Infinite scroll
-window.addEventListener('scroll', () => {
-  if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300) {
-    fetchNextPage();
-  }
-});
-
-genreSelect.addEventListener('change', resetAnime);
-yearSelect.addEventListener('change', resetAnime);
-document.getElementById('modal-close').addEventListener('click', closeModal);
-document.getElementById('modal').addEventListener('click', e => {
-  if (e.target.id === 'modal') closeModal();
-});
-window.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
-});
-
-// Initial Load
-fetchGenres();
-populateYearDropdown();
-resetAnime();
+  modal.style.display
