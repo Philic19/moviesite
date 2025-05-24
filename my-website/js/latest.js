@@ -1,124 +1,103 @@
-const API_KEY = 'a1e72fd93ed59f56e6332813b9f8dcae';
+const API_KEY = '277256e815b05aae4f56dd5dd45eaa97';
 const BASE_URL = 'https://api.themoviedb.org/3';
+const IMG_URL = 'https://image.tmdb.org/t/p/original';
+
+let currentItem = null;
 
 const latestMoviesList = document.getElementById('latest-movies-list');
-const prevBtn = document.getElementById('latest-prev-btn');
-const nextBtn = document.getElementById('latest-next-btn');
-const pageIndicator = document.getElementById('latest-page-indicator');
-const modal = document.getElementById('modal');
-const modalClose = document.getElementById('modal-close');
-const modalImage = document.getElementById('modal-image');
-const modalTitle = document.getElementById('modal-title');
-const modalRating = document.getElementById('modal-rating');
-const modalDescription = document.getElementById('modal-description');
-const modalVideo = document.getElementById('modal-video');
-const serverSelector = document.getElementById('server');
-const serverSelectorContainer = document.querySelector('.server-selector');
-
-
-let currentPage = 1;
-let totalPages = 1; // will be updated from API response
 
 async function fetchLatestMovies(page = 1) {
   try {
-    const response = await fetch(`${BASE_URL}/movie/now_playing?api_key=${API_KEY}&language=en-US&page=${page}`);
-    const data = await response.json();
-
-    // TMDB /movie/latest endpoint returns a single latest movie, so better use "now_playing" or "popular" for multiple latest movies:
-    // const response = await fetch(`${BASE_URL}/movie/now_playing?api_key=${API_KEY}&language=en-US&page=${page}`);
-
-    totalPages = data.total_pages;
-    currentPage = data.page;
-
+    const res = await fetch(`${BASE_URL}/movie/now_playing?api_key=${API_KEY}&language=en-US&page=${page}`);
+    const data = await res.json();
     displayLatestMovies(data.results || []);
-    updatePaginationButtons();
   } catch (error) {
     console.error('Error fetching latest movies:', error);
   }
 }
 
 function displayLatestMovies(movies) {
-  if (!latestMoviesList) return;
-
-  latestMoviesList.innerHTML = '';
+  latestMoviesList.innerHTML = ''; // Clear container
 
   movies.forEach(movie => {
     const img = document.createElement('img');
-    img.src = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
-    img.alt = movie.title;
-    img.title = movie.title;
-    img.classList.add('movie-poster');
+    img.src = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '';
+    img.alt = movie.title || 'No title';
+    img.title = movie.title || '';
+    img.loading = 'lazy';
+    img.style.cursor = 'pointer';
 
-    img.onclick = () => openModalWithMovie(movie);
+    img.onclick = () => showDetails({
+      ...movie,
+      media_type: 'movie' // add media_type for video embed URL
+    });
 
     latestMoviesList.appendChild(img);
   });
 }
 
-function updatePaginationButtons() {
-  pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
-  prevBtn.disabled = currentPage <= 1;
-  nextBtn.disabled = currentPage >= totalPages;
-}
+// Modal functions and helpers:
 
-function openModalWithMovie(movie) {
-  modal.style.display = 'flex';
+function showDetails(item) {
+  currentItem = item;
 
-  modalImage.src = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '';
-  modalTitle.textContent = movie.title || 'No title';
-  modalDescription.textContent = movie.overview || 'No description available.';
-  
-  // Show star rating (out of 5 stars)
-  modalRating.innerHTML = '';
-  const ratingOutOfFive = Math.round(movie.vote_average / 2);
-  for (let i = 0; i < 5; i++) {
-    const star = document.createElement('span');
-    star.className = 'fa fa-star' + (i < ratingOutOfFive ? ' checked' : '');
-    modalRating.appendChild(star);
+  document.getElementById('modal-title').textContent = item.title || 'No title';
+  document.getElementById('modal-description').textContent = item.overview || 'No description.';
+  document.getElementById('modal-image').src = item.poster_path ? `${IMG_URL}${item.poster_path}` : '';
+  document.getElementById('modal-rating').innerHTML = getStars(item.vote_average || 0);
+
+  // Default server selector setup
+  const serverSelect = document.getElementById('server');
+  if (serverSelect) {
+    serverSelect.value = 'vidsrc.cc'; // default server
+    serverSelect.onchange = changeServer;
   }
-  
- / Show video and server selector
-  modalVideo.style.display = 'block';
-  serverSelectorContainer.style.display = 'block';
 
-  // Load video from default server (first option)
-  serverSelector.selectedIndex = 0;
-  loadVideoFromServer(serverSelector.value, movie);
+  document.getElementById('modal').style.display = 'flex';
 
-  // When user changes server, update video iframe
-  serverSelector.onchange = () => {
-    loadVideoFromServer(serverSelector.value, movie);
-  };
+  changeServer();
 }
 
-// Close modal handler
-modalClose.onclick = () => {
-  modal.style.display = 'none';
-};
+function changeServer() {
+  if (!currentItem) return;
+  const server = document.getElementById('server').value;
+  const type = currentItem.media_type === "tv" ? "tv" : "movie";
+  let embedURL = "";
 
-// Close modal on outside click
-window.onclick = (event) => {
-  if (event.target === modal) {
-    modal.style.display = 'none';
+  if (server === "vidsrc.cc") {
+    embedURL = `https://vidsrc.cc/v2/embed/${type}/${currentItem.id}`;
+  } else if (server === "vidsrc.me") {
+    embedURL = `https://vidsrc.net/embed/${type}/?tmdb=${currentItem.id}`;
+  } else if (server === "player.videasy.net") {
+    embedURL = `https://player.videasy.net/${type}/${currentItem.id}`;
   }
-};
 
-// Button event listeners
-if (prevBtn && nextBtn) {
-  prevBtn.addEventListener('click', () => {
-    if (currentPage > 1) {
-      fetchLatestMovies(currentPage - 1);
-    }
-  });
-
-  nextBtn.addEventListener('click', () => {
-    if (currentPage < totalPages) {
-      fetchLatestMovies(currentPage + 1);
-    }
-  });
+  const videoFrame = document.getElementById('modal-video');
+  if (videoFrame) {
+    videoFrame.src = embedURL;
+  }
 }
 
-// Initial fetch on page load if container exists
-if (latestMoviesList) {
-  fetchLatestMovies();
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+  const videoFrame = document.getElementById('modal-video');
+  if (videoFrame) videoFrame.src = '';
 }
+
+function getStars(vote) {
+  const full = Math.floor(vote / 2);
+  const half = vote % 2 >= 1 ? 1 : 0;
+  return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - half);
+}
+
+// Event listeners for closing modal
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeModal();
+});
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// Kick off initial fetch
+fetchLatestMovies();
