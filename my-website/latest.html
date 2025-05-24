@@ -31,6 +31,30 @@
     </div>
   </div>
 
+  <div class="modal" id="modal">
+  <div class="modal-content">
+    <span class="close" id="modal-close" style="color: red; cursor: pointer;">&times;</span>
+    <div class="modal-body">
+      <img id="modal-image" src="" alt="" />
+      <div class="modal-text">
+        <h2 id="modal-title"></h2>
+        <div class="stars" id="modal-rating"></div>
+        <p id="modal-description"></p>
+      </div>
+    </div>
+    <div class="server-selector" style="display:none;">
+      <label for="server">Change Server:</label>
+      <select id="server">
+        <option value="vidsrc.cc">Vidsrc.cc</option>
+        <option value="vidsrc.me">Vidsrc.me</option>
+        <option value="player.videasy.net">Player.Videasy.net</option>
+      </select>
+    </div>
+    <iframe id="modal-video" width="100%" height="315" frameborder="0" allowfullscreen style="display:none;"></iframe>
+  </div>
+</div>
+
+
   <footer class="footer">
     <div class="footer-content">
       <p>&copy; Xe Yiu Movies. All rights reserved.</p>
