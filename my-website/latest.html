@@ -16,7 +16,8 @@
       <a href="latest.html" class="active">Latest</a>
       <a href="tvshows.html">TV Shows</a>
       <a href="categories.html">Categories</a>
-      <input type="text" class="search-bar" placeholder="Search..." />
+      <!-- Changed search bar to readonly and added id for JS -->
+      <input type="text" id="search-input-navbar" class="search-bar" placeholder="Search..." readonly />
       <button id="theme-toggle">🌗</button>
     </div>
   </div>
@@ -32,7 +33,6 @@
   <div class="row">
     <h2>Latest Movies</h2>
     <div class="list latest-list" id="latest-movies-list"></div>
-    <!-- Remove pagination buttons since infinite scroll -->
     <div class="pagination" style="text-align:center; margin: 20px;">
       <span id="latest-page-indicator">Page 1</span>
     </div>
@@ -63,10 +63,11 @@
     </div>
   </div>
 
-  <div class="search-modal" id="search-modal">
-    <span class="close" onclick="closeSearchModal()" style="color: red;">&times;</span>
-    <input type="text" id="search-input" placeholder="Search for a movie or show..." oninput="searchTMDB()" />
-    <div class="results" id="search-results"></div>
+  <!-- Updated Search Modal -->
+  <div id="search-modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.9); overflow:auto; padding:20px; box-sizing:border-box;">
+    <span id="search-close-btn" style="font-size:28px; font-weight:bold; color:red; cursor:pointer; position:absolute; right:30px; top:30px;">&times;</span>
+    <input type="text" id="search-input" placeholder="Search for a movie or show..." style="width:100%; max-width:600px; padding:10px; font-size:18px; margin-bottom:20px;" />
+    <div id="search-results" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
   </div>
 
   <footer class="footer">
