@@ -2,9 +2,10 @@ const API_KEY = "277256e815b05aae4f56dd5dd45eaa97";
 const BASE_URL = "https://api.themoviedb.org/3";
 const mediaType = "tv"; // 'tv' for anime shows
 
-const latestMoviesList = document.getElementById("latestMoviesList");
-const yearSelect = document.getElementById("yearSelect");
-const pageIndicator = document.getElementById("pageIndicator");
+const latestMoviesList = document.getElementById("anime-list");
+const yearSelect = document.getElementById("year-select");
+const pageIndicator = document.getElementById("anime-page-indicator");
+const loader = document.getElementById("loader");
 
 let currentPage = 1;
 let totalPages = 1;
@@ -16,6 +17,7 @@ async function fetchNextPage() {
   if (currentPage > totalPages || currentPage > 100) return; // TMDB max 100 pages
 
   isLoading = true;
+  loader.style.display = "block";
   pageIndicator.textContent = `Loading page ${currentPage}...`;
 
   const year = yearSelect.value;
@@ -27,11 +29,12 @@ async function fetchNextPage() {
     totalPages = cached.totalPages;
     currentPage++;
     isLoading = false;
+    loader.style.display = "none";
     pageIndicator.textContent = `Page ${currentPage - 1}`;
     return;
   }
 
-  let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_original_language=ja`;
+  let url = `${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${currentPage}&with_original_language=ja&sort_by=popularity.desc`;
 
   if (year) {
     url += `&first_air_date_year=${year}`;
@@ -54,6 +57,7 @@ async function fetchNextPage() {
     pageIndicator.textContent = "Error loading data.";
   } finally {
     isLoading = false;
+    loader.style.display = "none";
   }
 }
 
@@ -66,23 +70,37 @@ function appendShows(shows) {
   }
 
   shows.forEach((show) => {
+    const container = document.createElement("div");
+    container.classList.add("anime-card");
+    container.style.display = "inline-block";
+    container.style.margin = "10px";
+    container.style.width = "150px";
+    container.style.cursor = "pointer";
+
     const img = document.createElement("img");
     img.src = show.poster_path
       ? `https://image.tmdb.org/t/p/w342${show.poster_path}`
       : "https://via.placeholder.com/200x300?text=No+Image";
     img.alt = show.name || "No title";
-    img.title = show.name || "";
     img.loading = "lazy";
-    img.style.cursor = "pointer";
-    img.style.minHeight = "250px";
+    img.style.width = "100%";
+    img.style.borderRadius = "8px";
 
-    img.onclick = () =>
+    const title = document.createElement("h3");
+    title.textContent = show.name || "Untitled";
+    title.style.fontSize = "1rem";
+    title.style.margin = "5px 0 0 0";
+
+    container.appendChild(img);
+    container.appendChild(title);
+
+    container.onclick = () =>
       showDetails({
         ...show,
         media_type: mediaType,
       });
 
-    latestMoviesList.appendChild(img);
+    latestMoviesList.appendChild(container);
   });
 }
 
