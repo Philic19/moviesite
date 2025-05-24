@@ -150,14 +150,12 @@ body.light-mode .modal-content {
 }
 
 .anime-list {
-  display: flex;
-  flex-wrap: wrap;         /* allows items to wrap to next line */
-  gap: 12px;               /* space between items */
-  justify-content: center; /* center the grid horizontally */
-  max-height:none;
-  height:auto;
-  overflow-y:visible;
-}
+                  display: grid;
+                  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                  gap: 15px;
+                  overflow-x: visible; /* Disable horizontal scroll */
+                  padding: 10px;
+            }
 
 .anime-list img {
   flex: 0 1 150px;         /* each image tries to be 150px wide but can shrink */
