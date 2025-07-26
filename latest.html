@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+   <title>Latest Movies - XeYiu</title>
+   <link rel="stylesheet" href="css/home.css" />
+   <link rel="stylesheet" href="css/auth.css" />
+   <script defer src="js/latest.js"></script>
+   <script src="js/auth.js" type="module" defer></script>
+  <script src="js/favorites.js" type="module" defer></script>
+ </head>
+
+<body>
+  <div class="navbar">
+    <a href="index.html">
+      <img src="https://media.istockphoto.com/id/1357081095/vector/cute-panda-watching-cinema-eating-pop-corn.jpg?s=612x612&w=0&k=20&c=_kiyQ64K7rBb9E8H_VHGFRLnLrCUZ2fTmeRrqH7AZL8=" alt="XeYiu Logo" />
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="latest.html" class="active">Movies</a>
+      <a href="tvshows.html">TV Shows</a>
+       <a href="anime.html">Anime</a>
+       <input type="text" id="search-input-navbar" class="search-bar" placeholder="Search..." readonly />
+       <button id="theme-toggle" aria-label="Toggle Theme">🌗</button>
+      <button id="auth-button" onclick="window.authManager?.openAuthModal()">Login</button>
+      <div id="user-profile" onclick="window.authManager?.openProfileModal()">
+        <div class="user-avatar" id="user-avatar">U</div>
+        <div class="user-email"></div>
+      </div>
+     </div>
+   </div>
+ 
+  <div class="genre-filter-container" style="text-align:center; margin: 20px;">
+    <label for="genre-select">Genre:</label>
+    <select id="genre-select">
+      <option value="" disabled selected>All Genres</option>
+    </select>
+
+    <label for="year-select">Year:</label>
+    <select id="year-select">
+      <option value="" disabled selected>All Years</option>
+    </select>
+  </div>
+
+  <div id="loader" style="display:none; text-align:center; padding: 20px;" role="status">
+    ⏳ Loading...
+  </div>
+
+  <div class="row">
+    <h2>Latest Movies</h2>
+    <div class="list latest-list" id="latest-movies-list"></div>
+    <div class="pagination" style="text-align:center; margin: 20px;">
+      <span id="latest-page-indicator">Page 1</span>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <span class="close" id="modal-close" style="color: red; cursor: pointer;">&times;</span>
+      <div class="modal-body">
+        <img id="modal-image" src="" alt="" loading="lazy" />
+        <div class="modal-text">
+          <h2 id="modal-title"></h2>
+          <div class="stars" id="modal-rating"></div>
+          <p id="modal-description"></p>
+        </div>
+      </div>
+      <div class="server-selector" style="margin-bottom:10px;">
+        <label for="server">Change Server:</label>
+        <select id="server">
+          <option value="vidsrc.cc">Vidsrc.cc</option>
+          <option value="vidsrc.me">Vidsrc.me</option>
+          <option value="player.videasy.net">Player.Videasy.net</option>
+        </select>
+      </div>
+      <iframe id="modal-video" width="100%" height="315" frameborder="0" allowfullscreen style="border-radius:8px;"></iframe>
+    </div>
+  </div>
+
+  <!-- Updated Search Modal -->
+  <div id="search-modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.9); overflow:auto; padding:20px; box-sizing:border-box;">
+    <span id="search-close-btn" style="font-size:28px; font-weight:bold; color:red; cursor:pointer; position:absolute; right:30px; top:30px;">&times;</span>
+    <input type="text" id="search-input" placeholder="Search for a movie or show..." style="width:100%; max-width:600px; padding:10px; font-size:18px; margin-bottom:20px;" />
+    <div id="search-results" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <p>&copy; Xe Yiu Movies. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="#" onclick="openDisclaimerModal()">Disclaimer</a>
+        <a href="#" id="open-about-btn">About Us</a>
+        <a href="#">Contact Us</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Disclaimer Modal -->
+  <div class="modal" id="disclaimer-modal" role="dialog" aria-modal="true" aria-labelledby="disclaimer-title" aria-hidden="true">
+    <div class="modal-content">
+      <span class="close" onclick="closeDisclaimerModal()" aria-label="Close Disclaimer Modal">&times;</span>
+      <h2 id="disclaimer-title">Disclaimer</h2>
+      <p>This website does not host or upload any video/media files. All content such as posters, summaries, and streaming links are sourced from publicly available platforms or third-party services. We do not claim ownership of any media content.</p>
+      <p>All trademarks, logos, and media are the property of their respective owners. If you believe your rights are being violated, please <a href="#">contact us</a> and we will take appropriate action.</p>
+      <p>Use this website at your own discretion. We are not liable for any issues or damages that may arise from using external links or information on this site.</p>
+    </div>
+  </div>
+
+  <!-- About Us Modal -->
+  <div id="about-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="about-title" aria-hidden="true" style="display:none; justify-content:center; align-items:center;">
+    <div class="modal-content" style="max-width:600px; position:relative;">
+      <span class="close" id="close-about-btn" aria-label="Close About Modal" style="position:absolute; top:10px; right:10px; font-size:24px;">&times;</span>
+      <h2 id="about-title">About Us</h2>
+      <p>Welcome to Xeyiu Collections, your one-stop destination for discovering trending movies, TV shows, and anime.</p>
+      <p>We aim to provide a seamless experience to explore popular entertainment from various genres and categories.</p>
+      <p>Thank you for visiting and being part of our growing community.</p>
+    </div>
+  </div>
+
+</body>
+</html>

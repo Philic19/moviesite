@@ -1,0 +1,128 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Watch trending movies, TV shows, and anime on Xeyiu Collections. Discover top-rated entertainment across all genres.">
+  <meta name="keywords" content="Movies, TV Shows, Anime, Streaming, Xeyiu, Latest, Categories">
+  <meta name="author" content="Xe Yiu">
+   <title>Xeyiu Collections</title>
+   <link rel="stylesheet" href="css/home.css">
+   <link rel="stylesheet" href="css/auth.css">
+   <link rel="preload" href="css/home.css" as="style">
+   <link rel="preload" href="js/home.js" as="script">
+   <link rel="preload" as="image" href="banner-image.jpg">
+   <link rel="manifest" href="manifest.json">
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+   <script src="js/home.js" defer></script>
+  <script src="js/auth.js" type="module" defer></script>
+  <script src="js/favorites.js" type="module" defer></script>
+ </head>
+
+<body>
+  <div class="navbar">
+    <img src="https://media.istockphoto.com/id/1357081095/vector/cute-panda-watching-cinema-eating-pop-corn.jpg?s=612x612&w=0&k=20&c=_kiyQ64K7rBb9E8H_VHGFRLnLrCUZ2fTmeRrqH7AZL8=" alt="LOGO HERE"  />
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="latest.html">Movies</a>
+      <a href="tvshows.html">TV Shows</a>
+       <a href="anime.html">Anime</a>
+       <input type="text" class="search-bar" placeholder="Search..." onfocus="openSearchModal()" />
+       <button id="theme-toggle">🌗</button>
+        <button id="auth-button" onclick="window.authManager?.openAuthModal()">Login</button>
+        <div id="user-profile" onclick="window.authManager?.openProfileModal()">
+        <div class="user-avatar" id="user-avatar">U</div>
+        <div class="user-email"></div>
+      </div>
+     </div>
+   </div>
+
+   <div class="banner" id="banner" style="position: relative; cursor: pointer;">
+    <button id="banner-prev" class="banner-arrow" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;">&#8592;</button>
+    <h1 id="banner-title"></h1>
+    <button id="banner-next" class="banner-arrow" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10;">&#8594;</button>
+  </div>
+  <div class="genre-filter-container" style="text-align:center; margin: 20px;">
+    <label for="genre-filter"><strong>Filter by Genre:</strong></label>
+    <select id="genre-filter"></select>
+  </div>
+  <div class="row">
+    <h2>Trending Movies</h2>
+    <div class="list" id="movies-list"></div>
+  </div>
+  <div class="row">
+    <h2>Trending TV Shows</h2>
+    <div class="list" id="tvshows-list"></div>
+  </div>
+  <div class="row">
+    <h2>Trending Anime</h2>
+    <div class="list" id="anime-list"></div>
+  </div>
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()" style="color: red;">&times;</span>
+      <div class="modal-body">
+        <img id="modal-image" src="" alt="" />
+        <div class="modal-text">
+          <h2 id="modal-title"></h2>
+          <div class="stars" id="modal-rating"></div>
+          <p id="modal-description"></p>
+        </div>
+      </div>
+      <div class="server-selector">
+        <label for="server">Change Server:</label>
+      <select id="server">
+              <option value="vidsrc.cc">Vidsrc.cc</option>
+              <option value="vidsrc.net">Vidsrc.net</option>
+              <option value="player.videasy.net">Videasy</option>
+              <option value="2embed">2Embed</option>
+              <option value="multiembed">MultiEmbed</option>
+      </select>
+
+      </div>
+      <iframe id="modal-video" width="100%" height="315" frameborder="0" allowfullscreen></iframe>
+    </div>
+  </div>
+  <div class="search-modal" id="search-modal">
+    <span class="close" onclick="closeSearchModal()" style="color: red;">&times;</span>
+    <input type="text" id="search-input" placeholder="Search for a movie or show..." oninput="searchTMDB()" />
+    <div class="results" id="search-results"></div>
+  </div>
+  <footer class="footer">
+    <div class="footer-content">
+      <p>&copy; Xe Yiu Movies. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="#" onclick="openDisclaimerModal()">Disclaimer</a>
+        <a href="#" id="open-about-btn">About Us</a>
+        <a href="#">Contact Us</a>
+      </div>
+    </div>
+  </footer>
+  
+  <div id="loader" style="display:none; text-align:center; padding: 20px;">⏳ Loading...</div>
+  <div class="modal" id="disclaimer-modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeDisclaimerModal()" style="color: red;">&times;</span>
+      <h2>Disclaimer</h2>
+      <p>
+        This website does not host or upload any video/media files. All content such as posters, summaries, and streaming links are sourced from publicly available platforms or third-party services. We do not claim ownership of any media content.
+      </p>
+      <p>
+        All trademarks, logos, and media are the property of their respective owners. If you believe your rights are being violated, please <a href="#">contact us</a> and we will take appropriate action.
+      </p>
+      <p>
+        Use this website at your own discretion. We are not liable for any issues or damages that may arise from using external links or information on this site.
+      </p>
+    </div>
+  </div>
+
+  <div id="about-modal" class="modal" style="display:none; justify-content:center; align-items:center;">
+    <div class="modal-content" style="max-width:600px; position:relative;">
+      <span class="close" id="close-about-btn" style="color: red; cursor:pointer; position:absolute; top:10px; right:10px; font-size:24px;">&times;</span>
+      <h2>About Us</h2>
+      <p>Welcome to Xeyiu Collections, your one-stop destination for discovering trending movies, TV shows, and anime.</p>
+      <p>We aim to provide a seamless experience to explore popular entertainment from various genres and categories.</p>
+      <p>Thank you for visiting and being part of our growing community.</p>
+    </div>
+  </div>
+</body>
+</html>

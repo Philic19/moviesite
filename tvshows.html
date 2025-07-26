@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TV SHOWS - XeYiu</title>
+   <link rel="stylesheet" href="css/home.css"> 
+   <link rel="stylesheet" href="css/auth.css">
+   <script defer src="js/tvshows.js"></script> 
+   <script src="js/auth.js" type="module" defer></script>
+  <script src="js/favorites.js" type="module" defer></script>
+ </head>
+
+<body>
+
+  <div class="navbar">
+   <img src="https://media.istockphoto.com/id/1357081095/vector/cute-panda-watching-cinema-eating-pop-corn.jpg?s=612x612&w=0&k=20&c=_kiyQ64K7rBb9E8H_VHGFRLnLrCUZ2fTmeRrqH7AZL8=" alt="LOGO HERE"  />
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="latest.html" class="active">Movies</a>
+      <a href="tvshows.html">TV Shows</a>
+       <a href="anime.html">Anime</a>
+       <input type="text" class="search-bar" placeholder="Search..." />
+       <button id="theme-toggle">🌗</button>
+      <button id="auth-button" onclick="window.authManager?.openAuthModal()">Login</button>
+      <div id="user-profile" onclick="window.authManager?.openProfileModal()">
+        <div class="user-avatar" id="user-avatar">U</div>
+        <div class="user-email"></div>
+      </div>
+     </div>
+   </div>
+
+   
+  <div class="genre-filter-container" style="text-align:center; margin: 20px;">
+     <label for="genre-select">Genre:</label>
+     <select id="genre-select"><option value="">All Genres</option></select>
+
+    <label for="year-select">Year:</label>
+    <select id="year-select"><option value="">All Years</option></select>
+  </div>
+  
+  <div class="row">
+    <h2>TV SHOWS</h2>
+    <div class="list latest-list" id="latest-movies-list"></div>
+    <div class="pagination" style="text-align:center; margin: 20px;">
+  <button id="latest-prev-btn" disabled>⬅ Prev</button>
+  <span id="latest-page-indicator">Page 1</span>
+  <button id="latest-next-btn">Next ➡</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+  <div class="modal-content">
+    <span class="close" id="modal-close" style="color: red; cursor: pointer;">&times;</span>
+    <div class="modal-body">
+      <img id="modal-image" src="" alt="" />
+      <div class="modal-text">
+        <h2 id="modal-title"></h2>
+        <div class="stars" id="modal-rating"></div>
+        <p id="modal-description"></p>
+      </div>
+    </div>
+    <div class="server-selector" style="margin-bottom:10px;">
+      <label for="server">Change Server:</label>
+      <select id="server">
+        <option value="vidsrc.cc">Vidsrc.cc</option>
+        <option value="vidsrc.me">Vidsrc.me</option>
+        <option value="player.videasy.net">Player.Videasy.net</option>
+      </select>
+    </div>
+    <iframe id="modal-video" width="100%" height="315" frameborder="0" allowfullscreen style="border-radius:8px;"></iframe>
+  </div>
+</div>
+  
+    <div class="search-modal" id="search-modal">
+    <span class="close" onclick="closeSearchModal()" style="color: red;">&times;</span>
+    <input type="text" id="search-input" placeholder="Search for a movie or show..." oninput="searchTMDB()" />
+    <div class="results" id="search-results"></div>
+  </div>
+
+
+  <footer class="footer">
+    <div class="footer-content">
+      <p>&copy; Xe Yiu Movies. All rights reserved.</p>
+    </div>
+  </footer>
+
+</body>
+</html>
