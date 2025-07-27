@@ -4,28 +4,6 @@ A modern movie, TV show, and anime discovery platform with user authentication a
 
 ## 🚀 Quick Start
 
-### Testing Locally (No Supabase Setup Required)
-
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-2. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
-
-3. **Open your browser** - The site will automatically open at `http://localhost:3000`
-
-4. **Test the authentication:**
-   - The site will run in TEST MODE automatically
-   - You'll see a test mode indicator at the top
-   - Try these test credentials:
-     - Email: `test@example.com`
-     - Password: `password123`
-   - Or create a new test account
-
 ### Features You Can Test
 
 ✅ **Authentication System:**
@@ -112,5 +90,3 @@ my-website/
 - Progressive Web App ready
 
 ---
-
-**Ready to test?** Just run `npm run dev` and start exploring! 🍿
